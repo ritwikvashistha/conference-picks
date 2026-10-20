@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+brief.txt
+abstract.txt
+*.tsv
+*.ics
+*.csv
+.DS_Store
