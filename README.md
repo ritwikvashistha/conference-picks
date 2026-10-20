@@ -83,16 +83,16 @@ Checked on six papers from different research areas, with a separate LLM judging
 
 ## Using it in Codex
 
-Checked on 2026-10-20 on macOS with Codex CLI 0.163.0-alpha.10.2 (the CLI bundled with the ChatGPT desktop app), with the skill in a project's `.agents/skills/` folder. In three sessions, the prompt "I'm going to NeurIPS 2026, my paper is id 148353, which papers should I see?" was enough for Codex to pick up the skill, run the bundled script and return a grouped list; one session also produced a calendar. The Codex docs describe no equivalent of `${CLAUDE_SKILL_DIR}`, and in these sessions Codex read SKILL.md as plain text and substituted the skill folder's path itself.
+Checked on 2026-10-20 on macOS with Codex CLI 0.163.0-alpha.10.2 (the CLI bundled with the ChatGPT desktop app). In three sessions with the skill in a project's `.agents/skills/` folder, and in one with the plugin installed from a local checkout, the prompt "I'm going to NeurIPS 2026, my paper is id 148353, which papers should I see?" was enough for Codex to pick up the skill, run the bundled script and return a grouped list; one session also produced a calendar. The Codex docs describe no equivalent of `${CLAUDE_SKILL_DIR}`, and in these sessions Codex read SKILL.md as plain text and substituted the skill folder's path itself.
 
-Not tested: the IDE extension, the desktop app's own chat, Windows and Linux, installing from GitHub, a session started from the plugin install (only the install step was tried, from a local path in a throwaway Codex home), and the `~/.agents/skills/` location. Result quality was not evaluated, and the numbers in this README come from Claude agents only. One Codex session reported about 320K input tokens (about 264K cached) and 8K output tokens, which is counted differently from the Claude figures above, so do not compare them.
+Not tested: the IDE extension, the desktop app's own chat, Windows and Linux, installing the plugin from GitHub (the one plugin session used a local checkout), and the `~/.agents/skills/` location. Result quality was not evaluated, and the numbers in this README come from Claude agents only. One Codex session reported about 320K input tokens (about 264K cached) and 8K output tokens, which is counted differently from the Claude figures above, so do not compare them.
 
 Codex's sandbox changes what works:
 
 - **Network is off by default**, so profile mode cannot reach api.openalex.org. The `profile` command then prints "OpenAlex request failed" and the agent should offer another input (BibTeX, titles or NeurIPS ids). The Codex docs give two ways to allow it, neither tried here: start Codex with `-c 'sandbox_workspace_write.network_access=true'`, or set `network_access = true` under `[sandbox_workspace_write]` in `~/.codex/config.toml`. Profile mode also saves `profile.json`, so it needs a writable sandbox too. The default search needs no network.
 - **A folder Codex has not marked as trusted started read-only** in my `codex exec` tests. The agent then cannot write scratch files or `.ics` and `.csv` files. SKILL.md tells it to pass the search brief inline and print deliverables in its reply, and that worked for a calendar request. In `workspace-write`, `/tmp` and the project folder are writable.
 - `codex exec` cannot answer the budget question, so it uses Standard.
-- In two of the three sessions Codex read most of `search.py` before using it, which adds tokens.
+- In three of the four sessions Codex read part or most of `search.py` before using it, which adds tokens.
 
 ## Limits
 
