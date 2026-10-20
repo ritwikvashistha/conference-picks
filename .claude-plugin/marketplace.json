@@ -1,0 +1,14 @@
+{
+  "name": "neurips-picks",
+  "description": "Pick the NeurIPS 2026 papers and authors most relevant to your own work",
+  "owner": {
+    "name": "Ritwik Vashistha"
+  },
+  "plugins": [
+    {
+      "name": "neurips-picks",
+      "source": "./plugins/neurips-picks",
+      "description": "Ranked NeurIPS 2026 picks with reasons, grouped by site, session and local time"
+    }
+  ]
+}

@@ -1,17 +1,19 @@
 ---
 name: neurips-picks
-description: Find the NeurIPS 2026 papers and authors most relevant to the user's own work, grouped by site, session and local time. Use when the user is attending NeurIPS 2026 and gives their paper (NeurIPS link, id or abstract), their name, a Google Scholar link, ORCID or paper list, or asks what to see.
+description: Pick the NeurIPS 2026 papers and authors most relevant to the user's own work, grouped by site, session and local time. Use when the user is attending NeurIPS 2026 and gives a paper, name, Google Scholar link or abstract, or asks what to see.
 ---
 
 # NeurIPS 2026 picks
 
-Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex. Paths below are relative to this folder.
+Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex.
+
+Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. If it appears unexpanded, use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/neurips-picks/` (create it first) and pass full paths, not in the user's project. Write deliverables (`.ics`, `.csv`) to the current folder.
 
 ## 1. Get the user's work
 Two ways in. The default is cheaper; profile mode is optional and costs more tokens (see "Profile mode" below).
 
-- **Default: one or more NeurIPS 2026 papers** (link or id, repeatable): `python3 scripts/search.py show <id>[,<id>...]` prints its abstract and, if scheduled, where it is. Read it first: you need it to judge relevance.
-- Their name: `python3 scripts/search.py who --name "First Last"` lists their NeurIPS 2026 papers. Confirm with the user that these are theirs, then use the ids as above.
+- **Default: one or more NeurIPS 2026 papers** (link or id, repeatable): `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py show <id>[,<id>...]` prints its abstract and, if scheduled, where it is. Read it first: you need it to judge relevance.
+- Their name: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py who --name "First Last"` lists their NeurIPS 2026 papers. Confirm with the user that these are theirs, then use the ids as above.
 - Pasted abstract(s): use the text as given.
 - **Optional: profile mode**, when the user gives a Google Scholar link, ORCID, a BibTeX export or a list of titles, or wants coverage beyond one paper. Go to "Profile mode".
 
@@ -27,14 +29,14 @@ Ask once. If you cannot ask, use Standard. Say the cost to the user in your firs
 These come from test runs where a do-nothing agent run alone counted ~52K tokens of fixed overhead, so the totals were about 88K for Standard and 167K for Deep. Profile mode with Standard adds the cost of reading the user's works and triaging three pools: about 45K extra in one test (about 10K more than Standard on NeurIPS papers; the run counted ~97K in total). Tell the user it costs more than giving NeurIPS papers.
 
 ## 3. Search
-First write a search brief from the user's abstract(s), before you look at any candidates: about 25 short phrases (1-4 words; a few more is fine), one per line, saved to `brief.txt` in the current folder. Cover the core problems and methods, the names other communities use for the same ideas, and neighbouring subfields where similar problems are studied, even when they share no words with the abstract. Keyword search cannot cross a vocabulary gap by itself; the brief helps. It is scored as one extra query, weighted like one of the user's abstracts, so it adds reach without replacing them.
+First write a search brief from the user's abstract(s), before you look at any candidates: about 25 short phrases (1-4 words; a few more is fine), one per line, saved to `brief.txt` in the scratch folder. Cover the core problems and methods, the names other communities use for the same ideas, and neighbouring subfields where similar problems are studied, even when they share no words with the abstract. Keyword search cannot cross a vocabulary gap by itself; the brief helps. It is scored as one extra query, weighted like one of the user's abstracts, so it adds reach without replacing them.
 
-`python3 scripts/search.py find --paper <id> [--paper <id> ...] --text-file brief.txt` prints 150 candidates as TSV: rank, id, score, where, title, matched terms. For pasted abstracts, save them to `abstract.txt` and use `--text-file abstract.txt --text-file brief.txt` (each file is one query). The user's own papers are excluded. The order comes from keyword overlap, and a shared buzzword (for example "MMD") can fill the top ranks with weak matches while strong ones sit at rank 15-100: judge, do not trust the order. The matched terms mix whole phrases and single words, so treat them as hints. A `[oral]` tag in `where` marks an oral paper.
+`python3 ${CLAUDE_SKILL_DIR}/scripts/search.py find --paper <id> [--paper <id> ...] --text-file brief.txt` prints 150 candidates as TSV: rank, id, score, where, title, matched terms. For pasted abstracts, save them to `abstract.txt` and use `--text-file abstract.txt --text-file brief.txt` (each file is one query). The user's own papers are excluded. The order comes from keyword overlap, and a shared buzzword (for example "MMD") can fill the top ranks with weak matches while strong ones sit at rank 15-100: judge, do not trust the order. The matched terms mix whole phrases and single words, so treat them as hints. A `[oral]` tag in `where` marks an oral paper.
 
 Keep every `show` output under about 15 KB, because bigger outputs get truncated or saved to a file you then have to hunt for: run `show` in batches of at most 12 ids (10 for Deep).
 
-- **Quick:** take the top 20. Run `python3 scripts/search.py show <their ids> --no-abstract` to get authors. The reason for each is its matched terms; claim nothing more.
-- **Standard:** from the 150 lines choose the ~30 most promising (title and matched terms; when unsure, keep it). Run `python3 scripts/search.py show <ids> --chars 700` in batches. Keep the best.
+- **Quick:** take the top 20. Run `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py show <their ids> --no-abstract` to get authors. The reason for each is its matched terms; claim nothing more.
+- **Standard:** from the 150 lines choose the ~30 most promising (title and matched terms; when unsure, keep it). Run `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py show <ids> --chars 700` in batches. Keep the best.
 - **Deep:** run `show` on all 150 ids in batches, without `--chars`. Keep the best.
 
 ## 4. Judge
@@ -47,17 +49,17 @@ Group the picks by site (Sydney, Atlanta, Paris), then by session time, in date 
 
 Per paper: title linked to `https://neurips.cc/virtual/2026/poster/<id>`, authors, one reason. End with up to 8 authors worth talking to (people on several picks; if nobody repeats, the authors of the picks closest to the user's work) and why. Leave out the user's own co-authors, and mark any pick that is in the same session slot as one of the user's own papers ("same slot as your poster").
 
-If the user wants a calendar file: `python3 scripts/search.py ics <picked ids> > neurips-picks.ics` (times are converted to UTC; picks without a session yet are skipped and reported). To find other people from the user's institution: `python3 scripts/search.py who --affil "UT Austin"` (any common name or acronym works: "MIT", "Tsinghua", "Google DeepMind"; spelling variants are merged). The first line gives the number of papers and author slots and the split by site. Unknown names fall back to a regex on the raw affiliation.
+If the user wants a calendar file: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py ics <picked ids> > neurips-picks.ics` (times are converted to UTC; picks without a session yet are skipped and reported). To find other people from the user's institution: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py who --affil "UT Austin"` (any common name or acronym works: "MIT", "Tsinghua", "Google DeepMind"; spelling variants are merged). The first line gives the number of papers and author slots and the split by site. Unknown names fall back to a regex on the raw affiliation.
 
-If the user wants a spreadsheet to share with labmates: write one line per pick to a file, `<id><TAB><one-line reason>`, best first, then run `python3 scripts/search.py csv <picked ids> --reasons reasons.tsv > neurips-picks.csv`. Columns: rank, id, title, authors, institutions, site, session, local start and end, hall, oral, link, reason.
+If the user wants a spreadsheet to share with labmates: write one line per pick to a file, `<id><TAB><one-line reason>`, best first, then run `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py csv <picked ids> --reasons reasons.tsv > neurips-picks.csv`. Columns: rank, id, title, authors, institutions, site, session, local start and end, hall, oral, link, reason.
 
 ## Profile mode (optional, more tokens)
 Use it when the user wants the picks based on their whole body of work, not one paper. It replaces steps 1 and 3; steps 2, 4 and 5 still apply, with the changes below.
 
 **P1. Get the works.**
 - **Google Scholar link:** say you cannot read Scholar reliably: it has no API, its terms bar automated access against its own rules, and it blocks automated requests. Never try to get past a block or a CAPTCHA. Ask for one of these instead: their name (and institution) or ORCID; a BibTeX export from their Scholar profile (profiles have an Export option for selected papers); a pasted list of titles; or their NeurIPS 2026 paper ids. Only if the user explicitly asks you to try the profile page with your own fetch tool, read the first page only and stop at any block.
-- **Name:** `python3 scripts/search.py profile --name "First Last" --affil "<institution>"` lists matching OpenAlex authors. Names are ambiguous and OpenAlex sometimes merges different people, so show the user the institutions and topics and confirm which one is them. If none fits, ask for an ORCID or use another input.
-- **Then** `python3 scripts/search.py profile --id A... --save profile.json` (or `--orcid 0000-...`). It lists their works from the last 5 years, newest first (`--since YEAR` and `-n` change that), with short abstracts. Drop works that are clearly not theirs. OpenAlex abstracts can be missing or wrong: ignore one that does not fit its title.
+- **Name:** `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py profile --name "First Last" --affil "<institution>"` lists matching OpenAlex authors. Names are ambiguous and OpenAlex sometimes merges different people, so show the user the institutions and topics and confirm which one is them. If none fits, ask for an ORCID or use another input.
+- **Then** `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py profile --id A... --save profile.json` (or `--orcid 0000-...`). It lists their works from the last 5 years, newest first (`--since YEAR` and `-n` change that), with short abstracts. Drop works that are clearly not theirs. OpenAlex abstracts can be missing or wrong: ignore one that does not fit its title.
 - **BibTeX or titles:** `profile --bibtex scholar.bib --lookup --save profile.json` or `profile --titles-file titles.txt --lookup --save profile.json`. `--lookup` fetches abstracts from OpenAlex by title; some papers will not be found, and titles alone make weak queries.
 - If the user has NeurIPS 2026 papers (`who --name` finds them), also run `show <ids> --no-abstract` for them: you need their session slots and co-authors for step 5. Use them as `--paper` in P3 for the area they belong to.
 - If you cannot ask the user to confirm the OpenAlex author, choose the candidate whose institution matches the one the user gave and whose recent works fit their field, and say so.
@@ -65,7 +67,7 @@ Use it when the user wants the picks based on their whole body of work, not one 
 
 **P2. Propose areas.** Group the works into research areas. Propose the three most important, ranked, each with one line and its work numbers. Weigh recent output and what the user cares about. Ask which areas to prioritize. The default is your three in your order, with about half, 30% and 20% of the picks. If you cannot ask or get no answer, use the default. The user can pick one to three areas, reorder them, or name their own.
 
-**P3. Search per area.** Keep `profile.json`, the briefs and the pool files in one working folder and pass full paths. For each prioritized area, write a brief for that area as in step 3, then run `python3 scripts/search.py find --profile profile.json --use <work numbers of that area> --text-file brief_<n>.txt --exclude-name "<the user's name>" -k 60 > pool_<n>.tsv`. Add `--paper <id>` for their NeurIPS 2026 papers in that area, if any. Read each pool file in full (about 9 KB each). Triage across the pools, then read about 10 abstracts per area with `show --chars 700` in batches of at most 12. A paper in two pools counts once. If an area has no strong candidates, give it fewer picks and say so; do not pad.
+**P3. Search per area.** Keep `profile.json`, the briefs and the pool files in one working folder and pass full paths. For each prioritized area, write a brief for that area as in step 3, then run `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py find --profile profile.json --use <work numbers of that area> --text-file brief_<n>.txt --exclude-name "<the user's name>" -k 60 > pool_<n>.tsv`. Add `--paper <id>` for their NeurIPS 2026 papers in that area, if any. Read each pool file in full (about 9 KB each). Triage across the pools, then read about 10 abstracts per area with `show --chars 700` in batches of at most 12. A paper in two pools counts once. If an area has no strong candidates, give it fewer picks and say so; do not pad.
 
 **P4. Pick and output.** Pick 15-25 in total, split across the areas as agreed, and label every pick with its area. Output as in step 5, plus a closing line giving the number of picks per area. For Quick, take the top picks of each pool; for Deep, read more per area.
 

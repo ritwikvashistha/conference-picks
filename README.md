@@ -6,19 +6,31 @@ It runs on your own agent, with no accounts and no API keys. The search script u
 
 ## Install
 
-Claude Code:
+Pick one route. All need Python 3.9 or newer and nothing else.
+
+**Claude Code plugin** (recommended):
 
 ```bash
-git clone https://github.com/ritwikvashistha/neurips-picks ~/.claude/skills/neurips-picks
+claude plugin marketplace add ritwikvashistha/neurips-picks
+claude plugin install neurips-picks@neurips-picks
 ```
 
-Then start a session and ask, for example:
+The same two commands work inside a session as `/plugin marketplace add ...` and `/plugin install ...`. While the repository is private, you need GitHub access to it. Then just ask, for example:
 
 > I'm going to NeurIPS 2026. My paper there is id 148353. Which papers should I see?
 
-Other routes are not tested yet: uploading the folder as a zip skill on claude.ai, or pointing another coding agent at `SKILL.md` and telling it to follow it.
+You can also run it as `/neurips-picks:neurips-picks`.
 
-Requirements: Python 3.9 or newer, nothing else to install.
+**Standalone skill in Claude Code:**
+
+```bash
+git clone https://github.com/ritwikvashistha/neurips-picks
+cp -r neurips-picks/plugins/neurips-picks/skills/neurips-picks ~/.claude/skills/
+```
+
+**claude.ai:** run `python3 tools/make_zip.py` to build `dist/neurips-picks.zip`, then upload it as a skill in your claude.ai settings. This route is untested, and profile mode needs access to api.openalex.org, which a sandboxed environment may block.
+
+**Other agents:** untested. Point the agent at `plugins/neurips-picks/skills/neurips-picks/SKILL.md` and tell it to follow it.
 
 ## Budgets
 
@@ -42,7 +54,7 @@ Google Scholar has no API and blocks automated access, so the agent will not try
 ## How it works
 
 1. The agent reads your abstract and writes a short keyword brief (other names for your ideas, neighbouring fields).
-2. `scripts/search.py` ranks all 9,105 posters with an abstract by word overlap with your abstract and the brief, and returns a pool of 150.
+2. `search.py` ranks all 9,105 posters with an abstract by word overlap with your abstract and the brief, and returns a pool of 150.
 3. The agent reads the promising candidates, picks 15 to 25, and explains each one in terms of your work.
 4. Output is grouped by site and session time, with times local to each site.
 
@@ -64,7 +76,7 @@ The search script runs locally and sends nothing anywhere. The one exception is 
 
 ## Data
 
-A snapshot of public NeurIPS 2026 program data is bundled. See [DATA_NOTICE.md](DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
+A snapshot of public NeurIPS 2026 program data is bundled. See [DATA_NOTICE.md](plugins/neurips-picks/skills/neurips-picks/DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
 
 ## Licence and contact
 
