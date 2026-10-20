@@ -30,6 +30,23 @@ cp -r neurips-picks/plugins/neurips-picks/skills/neurips-picks ~/.claude/skills/
 
 **claude.ai:** run `python3 tools/make_zip.py` to build `dist/neurips-picks.zip`, then upload it as a skill in your claude.ai settings. This route is untested, and profile mode needs access to api.openalex.org, which a sandboxed environment may block.
 
+**Codex** (CLI, IDE extension and app): Codex reads the same marketplace files, so the plugin route works the same way. Start a new session afterwards.
+
+```bash
+codex plugin marketplace add ritwikvashistha/neurips-picks
+codex plugin add neurips-picks@neurips-picks
+```
+
+Or install the standalone skill. Codex looks in `~/.agents/skills/` (all projects) and in `.agents/skills/` from the project folder up to the repository root (that repository only):
+
+```bash
+git clone https://github.com/ritwikvashistha/neurips-picks
+mkdir -p ~/.agents/skills
+cp -r neurips-picks/plugins/neurips-picks/skills/neurips-picks ~/.agents/skills/
+```
+
+Ask the same question as above, or type `$neurips-picks`, or pick it with `/skills`. See "Using it in Codex" below for what was tested and what limits apply.
+
 **Other agents:** untested. Point the agent at `plugins/neurips-picks/skills/neurips-picks/SKILL.md` and tell it to follow it.
 
 ## Budgets
@@ -62,7 +79,20 @@ Other commands: `who --name "..."` and `who --affil "UT Austin"` look people and
 
 ## How well does it work?
 
-Checked on six papers from different research areas, with a separate LLM judging every paper in each 150-paper pool on a 0 to 3 scale without knowing which method picked what. Standard picked 56 of the 94 papers rated closely related (rated 2 or more), against 34 for the plain word search, and found all 18 papers rated 3. These are one LLM judge's ratings on six papers, not human ratings, and only Claude agents have been tested. Treat it as a good reading list, not a ground truth.
+Checked on six papers from different research areas, with a separate LLM judging every paper in each 150-paper pool on a 0 to 3 scale without knowing which method picked what. Standard picked 56 of the 94 papers rated closely related (rated 2 or more), against 34 for the plain word search, and found all 18 papers rated 3. These are one LLM judge's ratings on six papers, not human ratings, and only Claude agents were used for this. Codex was checked only for running end to end (see "Using it in Codex"), not for quality. Treat it as a good reading list, not a ground truth.
+
+## Using it in Codex
+
+Checked on 2026-10-20 on macOS with Codex CLI 0.163.0-alpha.10.2 (the CLI bundled with the ChatGPT desktop app), with the skill in a project's `.agents/skills/` folder. In three sessions, the prompt "I'm going to NeurIPS 2026, my paper is id 148353, which papers should I see?" was enough for Codex to pick up the skill, run the bundled script and return a grouped list; one session also produced a calendar. The Codex docs describe no equivalent of `${CLAUDE_SKILL_DIR}`, and in these sessions Codex read SKILL.md as plain text and substituted the skill folder's path itself.
+
+Not tested: the IDE extension, the desktop app's own chat, Windows and Linux, installing from GitHub, a session started from the plugin install (only the install step was tried, from a local path in a throwaway Codex home), and the `~/.agents/skills/` location. Result quality was not evaluated, and the numbers in this README come from Claude agents only. One Codex session reported about 320K input tokens (about 264K cached) and 8K output tokens, which is counted differently from the Claude figures above, so do not compare them.
+
+Codex's sandbox changes what works:
+
+- **Network is off by default**, so profile mode cannot reach api.openalex.org. The `profile` command then prints "OpenAlex request failed" and the agent should offer another input (BibTeX, titles or NeurIPS ids). The Codex docs give two ways to allow it, neither tried here: start Codex with `-c 'sandbox_workspace_write.network_access=true'`, or set `network_access = true` under `[sandbox_workspace_write]` in `~/.codex/config.toml`. Profile mode also saves `profile.json`, so it needs a writable sandbox too. The default search needs no network.
+- **A folder Codex has not marked as trusted started read-only** in my `codex exec` tests. The agent then cannot write scratch files or `.ics` and `.csv` files. SKILL.md tells it to pass the search brief inline and print deliverables in its reply, and that worked for a calendar request. In `workspace-write`, `/tmp` and the project folder are writable.
+- `codex exec` cannot answer the budget question, so it uses Standard.
+- In two of the three sessions Codex read most of `search.py` before using it, which adds tokens.
 
 ## Limits
 

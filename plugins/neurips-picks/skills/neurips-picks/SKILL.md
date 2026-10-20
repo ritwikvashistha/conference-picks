@@ -7,7 +7,7 @@ description: Pick the NeurIPS 2026 papers and authors most relevant to the user'
 
 Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex.
 
-Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. If it appears unexpanded, use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/neurips-picks/` (create it first) and pass full paths, not in the user's project. Write deliverables (`.ics`, `.csv`) to the current folder.
+Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. Claude Code expands it; other agents (such as Codex) do not, so use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/neurips-picks/` (create it first) and pass full paths, not in the user's project. If you cannot write files (read-only sandbox), pass the brief inline with `--text` and print any deliverable in your reply. Write deliverables (`.ics`, `.csv`) to the current folder.
 
 ## 1. Get the user's work
 Two ways in. The default is cheaper; profile mode is optional and costs more tokens (see "Profile mode" below).
