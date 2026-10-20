@@ -7,8 +7,11 @@
   search.py who --name "Arya Farahi" | --affil "UT Austin|University of Texas"          # find people / an institution's papers
   search.py ics 101,102,103 > picks.ics                                                  # calendar file for chosen ids
   search.py csv 101,102,103 [--reasons reasons.tsv] > picks.csv                          # spreadsheet of chosen ids
+  search.py profile --name "First Last" [--affil "UT Austin"]                            # profile mode: find the author on OpenAlex
+  search.py profile --id A123... | --orcid 0000-... | --bibtex scholar.bib --save profile.json   # list works, save them
+  search.py find --profile profile.json --use 1,4,7 --text-file brief.txt                # search from chosen works
 """
-import argparse, gzip, json, math, os, re, sys, unicodedata
+import argparse, difflib, gzip, json, math, os, re, sys, time, unicodedata, urllib.parse, urllib.request
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -72,6 +75,10 @@ def cut(text, n):
     return text[: k + 1] if k > n * 3 // 4 else text[:n].rsplit(" ", 1)[0] + " ..."
 
 
+def name_key(n):
+    return " ".join(re.findall(r"[a-z]+", fold(n)))
+
+
 def find(a):
     papers = load()
     by_id = {p["id"]: i for i, p in enumerate(papers) if p["id"]}
@@ -83,8 +90,12 @@ def find(a):
             sys.exit(f"not a NeurIPS 2026 poster with an abstract: {s}")
         queries.append(vecs[i]); own.add(i)
     texts = [a.text] if a.text else []
-    if a.text_file:
-        texts.append(open(a.text_file, encoding="utf-8").read())
+    texts += [open(f, encoding="utf-8").read() for f in a.text_file or []]
+    if a.profile:  # works saved by `profile --save`; --use picks them by number
+        works = json.load(open(a.profile, encoding="utf-8"))
+        for n in a.use.split(","):
+            w = works[int(n) - 1]
+            texts.append(w["title"] + ". " + w["abstract"])
     queries += [vec(Counter(terms(t))) for t in texts]
     if not queries:
         sys.exit("give --paper, --text or --text-file")
@@ -93,7 +104,8 @@ def find(a):
         for t, qw in q.items():
             for i, dw in post[t]:
                 score[i] += qw * dw / len(queries)
-    top = sorted((i for i in score if i not in own), key=lambda i: -score[i])[: a.k]
+    ban = {name_key(n) for n in a.exclude_name or []}  # drop papers by the user (profile mode has no paper ids to exclude)
+    top = sorted((i for i in score if i not in own and not any(name_key(n) in ban for n, _ in papers[i]["authors"])), key=lambda i: -score[i])[: a.k]
     print("rank\tid\tscore\twhere\ttitle\tmatched terms")
     for r, i in enumerate(top, 1):
         shared = sorted(set().union(*(q.keys() for q in queries)) & vecs[i].keys(),
@@ -155,6 +167,73 @@ def who(a):
         print(f"{p['id']}\t{place(p)}\t{p['title']}\t{'; '.join(hit)}")
 
 
+def oa(path, **params):
+    url = "https://api.openalex.org/" + path + ("?" + urllib.parse.urlencode(params) if params else "")
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "neurips-picks agent skill"}), timeout=30) as r:
+            return json.load(r)
+    except Exception as e:
+        sys.exit(f"OpenAlex request failed ({e}). Offer another input: a BibTeX export, pasted titles, or NeurIPS paper ids.")
+
+
+def inverted(ii):
+    pos = {p: w for w, ps in (ii or {}).items() for p in ps}
+    return " ".join(pos[i] for i in sorted(pos))
+
+
+def bib_field(entry, names):
+    m = re.search(r"(?is)\b(?:" + names + r")\s*=\s*(?:\{((?:[^{}]|\{[^{}]*\})*)\}|\"([^\"]*)\")", entry)  # {braced} or "quoted" value
+    return " ".join(re.sub(r"[{}]", "", m.group(1) or m.group(2) or "").split()) if m else ""
+
+
+def bib_works(text):
+    out = []
+    for entry in re.split(r"(?m)^@", text)[1:]:
+        title = bib_field(entry, "title")
+        if title:
+            y = re.search(r"(?i)\byear\s*=\s*[{\"]?(\d{4})", entry)
+            out.append(dict(title=title, year=int(y.group(1)) if y else "", venue=bib_field(entry, "journal|booktitle"), cited="", abstract=""))
+    return out
+
+
+def profile(a):
+    works = []
+    if a.name:  # candidates only: names are ambiguous and OpenAlex sometimes merges different people
+        res = oa("authors", search=a.name, **{"per-page": 8})["results"]
+        if a.affil:
+            res.sort(key=lambda x: not any(fold(a.affil) in fold(i.get("display_name", "")) for i in x.get("last_known_institutions") or []))
+        print("openalex_id\tname\tinstitutions\tworks\tcitations\ttopics")
+        for x in res[:5]:
+            print("\t".join([x["id"].rsplit("/", 1)[-1], x["display_name"], "; ".join(i["display_name"] for i in x.get("last_known_institutions") or []),
+                             str(x["works_count"]), str(x["cited_by_count"]), "; ".join(t["display_name"] for t in (x.get("topics") or [])[:4])]))
+        print("# check institutions and topics with the user, then re-run with --id")
+        return
+    if a.id or a.orcid:
+        aid = a.id.rsplit("/", 1)[-1] if a.id else oa("authors/orcid:" + a.orcid.rsplit("/", 1)[-1], select="id")["id"].rsplit("/", 1)[-1]
+        d = oa("works", filter=f"author.id:{aid},from_publication_date:{a.since}-01-01", sort="publication_date:desc", select="title,publication_year,primary_location,cited_by_count,abstract_inverted_index", **{"per-page": a.n})
+        works = [dict(title=w["title"] or "", year=w["publication_year"], venue=((w.get("primary_location") or {}).get("source") or {}).get("display_name") or "",
+                      cited=w["cited_by_count"], abstract=inverted(w.get("abstract_inverted_index"))) for w in d["results"]]
+    elif a.bibtex:
+        works = bib_works(open(a.bibtex, encoding="utf-8", errors="replace").read())
+    elif a.titles_file:
+        works = [dict(title=t.strip(), year="", venue="", cited="", abstract="") for t in open(a.titles_file, encoding="utf-8") if t.strip()]
+    else:
+        sys.exit("give --name, --id, --orcid, --bibtex or --titles-file")
+    works = works[: a.n]
+    if a.lookup:  # abstracts for BibTeX or title lists, matched by title (a retitled paper may not be found)
+        for w in works:
+            if not w["abstract"]:
+                for r in oa("works", search=w["title"], select="title,abstract_inverted_index", **{"per-page": 3})["results"]:
+                    if difflib.SequenceMatcher(None, fold(w["title"]), fold(r["title"] or "")).ratio() > 0.85:
+                        w["abstract"] = inverted(r.get("abstract_inverted_index")); break
+                time.sleep(0.15)
+    for n, w in enumerate(works, 1):
+        print(f"#{n} {w['year']} | {w['title']} | {w['venue']}" + (f" | cited {w['cited']}" if w["cited"] != "" else "") + ("" if a.no_abstract or not w["abstract"] else "\n    " + cut(w["abstract"], a.chars)))
+    print(f"# {len(works)} works, {sum(bool(w['abstract']) for w in works)} with abstracts" + (f"; saved to {a.save}" if a.save else ""))
+    if a.save:
+        json.dump(works, open(a.save, "w", encoding="utf-8"))
+
+
 def to_csv(a):
     import csv as csvlib
     papers = {p["id"]: p for p in load() if p["id"]}
@@ -205,7 +284,9 @@ if __name__ == "__main__":
     sub = ap.add_subparsers(dest="cmd", required=True)
     f = sub.add_parser("find"); f.set_defaults(fn=find)
     f.add_argument("--paper", action="append", help="your NeurIPS 2026 paper: id or neurips.cc URL (repeatable)")
-    f.add_argument("--text"); f.add_argument("--text-file")
+    f.add_argument("--text"); f.add_argument("--text-file", action="append", help="repeatable; each file is one query")
+    f.add_argument("--profile", help="works saved by the profile command"); f.add_argument("--use", help="work numbers from the profile list, e.g. 1,4,7")
+    f.add_argument("--exclude-name", action="append", help="drop papers by this author (the user), repeatable")
     f.add_argument("-k", type=int, default=150, help="pool size (default 150)")
     s = sub.add_parser("show"); s.set_defaults(fn=show)
     s.add_argument("ids", help="comma-separated paper ids"); s.add_argument("--chars", type=int, help="truncate abstracts"); s.add_argument("--no-abstract", action="store_true", help="title, authors, where only")
@@ -213,6 +294,13 @@ if __name__ == "__main__":
     w.add_argument("--name", help="author name (all words must match)"); w.add_argument("--affil", help="regex on affiliation")
     c = sub.add_parser("ics"); c.set_defaults(fn=ics)
     c.add_argument("ids", help="comma-separated paper ids")
+    pr = sub.add_parser("profile"); pr.set_defaults(fn=profile)
+    pr.add_argument("--name"); pr.add_argument("--affil", help="rank name matches by institution")
+    pr.add_argument("--id", help="OpenAlex author id"); pr.add_argument("--orcid")
+    pr.add_argument("--bibtex", help="BibTeX export, for example from a Google Scholar profile"); pr.add_argument("--titles-file", help="one paper title per line")
+    pr.add_argument("--lookup", action="store_true", help="fetch abstracts from OpenAlex by title"); pr.add_argument("--since", type=int, default=datetime.now().year - 5)
+    pr.add_argument("-n", type=int, default=30, help="max works (default 30)"); pr.add_argument("--chars", type=int, default=450)
+    pr.add_argument("--no-abstract", action="store_true"); pr.add_argument("--save", help="write the works to this JSON file")
     v = sub.add_parser("csv"); v.set_defaults(fn=to_csv)
     v.add_argument("ids", help="comma-separated paper ids, best first"); v.add_argument("--reasons", help="TSV file: id, tab, one-line reason")
     a = ap.parse_args()

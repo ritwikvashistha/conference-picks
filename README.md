@@ -1,6 +1,6 @@
 # neurips-picks
 
-An agent skill that tells you which NeurIPS 2026 papers and authors are worth your time, given your own work. Give it your NeurIPS paper (id or link), your name, or an abstract. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
+An agent skill that tells you which NeurIPS 2026 papers and authors are worth your time, given your own work. Give it your NeurIPS paper (id or link), your name, or an abstract, or, in the optional profile mode, your name, ORCID or a paper list so it can cover all your work. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
 
 It runs on your own agent, with no accounts and no API keys. The search script uses only the Python standard library and a bundled snapshot of the NeurIPS 2026 program.
 
@@ -29,6 +29,15 @@ The agent asks how much reading you want, or defaults to Standard. Measured extr
 | Quick | the ranked list only | a few thousand (estimate) |
 | Standard (default) | one line per candidate, then the start of about 30 abstracts | about 35K |
 | Deep | the abstracts of all 150 candidates | about 115K |
+| Profile mode, with Standard | your works from OpenAlex, three pools, about 30 abstracts | about 45K (one test) |
+
+## Profile mode (optional, more tokens)
+
+By default the picks are based on one or more NeurIPS 2026 papers. If you would rather base them on your whole body of work, share your Google Scholar link, name, ORCID, a BibTeX export or a list of titles:
+
+> Here is my Google Scholar profile: https://scholar.google.com/citations?user=... Which NeurIPS 2026 papers should I see?
+
+Google Scholar has no API and blocks automated access, so the agent will not try to read it. It asks for your name (and institution) or ORCID instead, or a BibTeX export from your Scholar profile, or pasted titles. It finds your works on [OpenAlex](https://openalex.org), asks you to confirm it has the right person, groups your work into research areas, and proposes your top three. You choose which areas to prioritize, or accept its default (about half, 30% and 20% of the picks). It then searches each area separately. This reads more than a single paper, so it costs more tokens.
 
 ## How it works
 
@@ -47,11 +56,11 @@ Checked on six papers from different research areas, with a separate LLM judging
 
 - The word search ranks by overlap, so a shared buzzword can crowd the top of the list. The agent is told to judge, not trust the order.
 - Poster board numbers were not published when the data was collected, and sessions can change.
-- Author lookup is by name or affiliation within the NeurIPS data; ORCID is not supported.
+- Author lookup in the NeurIPS data is by name or affiliation. In profile mode, OpenAlex sometimes merges different people with similar names or has missing or wrong abstracts, so the agent checks with you.
 
 ## Privacy
 
-The script runs locally and sends nothing anywhere. Whatever you give your agent goes to your agent's provider, as with any use of it.
+The search script runs locally and sends nothing anywhere. The one exception is the optional `profile` command in profile mode, which sends the name, ORCID or paper titles you give it to api.openalex.org to look up your works. Whatever you give your agent goes to your agent's provider, as with any use of it.
 
 ## Data
 
