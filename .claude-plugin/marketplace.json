@@ -1,6 +1,6 @@
 {
   "name": "conference-picks",
-  "description": "Pick the NeurIPS 2026 papers and authors most relevant to your own work",
+  "description": "Pick the papers and authors most relevant to your own work at NeurIPS 2026 or another conference",
   "owner": {
     "name": "Ritwik Vashistha"
   },
@@ -8,7 +8,7 @@
     {
       "name": "conference-picks",
       "source": "./plugins/conference-picks",
-      "description": "Ranked NeurIPS 2026 picks with reasons, grouped by site, session and local time"
+      "description": "Ranked picks with reasons for NeurIPS 2026 (bundled) or another conference (your own paper list), grouped by site, session and local time"
     }
   ]
 }

@@ -1,11 +1,13 @@
 ---
 name: conference-picks
-description: Pick the NeurIPS 2026 papers and authors most relevant to the user's own work, grouped by site, session and local time. Use when the user is attending NeurIPS 2026 and gives a paper, name, Google Scholar link or abstract, or asks what to see.
+description: Pick the NeurIPS 2026 papers and authors most relevant to the user's own work, grouped by site, session and local time. Also works for another conference from a dataset the user supplies. Use when the user is attending NeurIPS 2026 or another conference and gives a paper, name, Google Scholar link or abstract, or asks what to see.
 ---
 
 # NeurIPS 2026 picks
 
 Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex. Do not fetch neurips.cc or other web pages to check or fill in details: the bundled data already holds the sessions and times.
+
+For another conference, or a dataset the user supplies, read `OTHER_CONFERENCES.md` in this folder first: it overrides the NeurIPS-specific parts below.
 
 Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. Claude Code expands it; other agents (such as Codex) do not, so use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/conference-picks/` (create it first) and pass full paths, not in the user's project. If you cannot write files (read-only sandbox), pass the brief inline with `--text` and print any deliverable in your reply. Write deliverables (`.ics`, `.csv`) to the current folder.
 

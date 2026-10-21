@@ -39,6 +39,10 @@ Contact: ritwikvashistha@gmail.com
 - Institution names are merged heuristically. Some institutions may be split across spellings or merged by mistake; reports are welcome.
 - This project is independent. It is not affiliated with, or endorsed by, NeurIPS or OpenReview. "NeurIPS" is used only to say which conference the data is about.
 
+## Other conferences
+
+`conference-picks` ships no data for any other conference. If you import a paper list yourself, the dataset stays on your machine, in `~/.conference-picks/`, under the terms of the source you got it from. The importer makes no network calls and records the source and its checksum in the dataset's `meta.json`.
+
 ## Licence
 
 The code and our derived tables (the institution mapping and the merged schedule fields) are released under the MIT License; see `LICENSE`. We claim no rights in the underlying NeurIPS and OpenReview metadata.

@@ -1,12 +1,12 @@
 # conference-picks
 
-An agent skill that tells you which NeurIPS 2026 papers and authors are worth your time, given your own work. Give it your NeurIPS paper (id or link), your name, or an abstract, or, in the optional profile mode, your name, ORCID or a paper list so it can cover all your work. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
+An agent skill that tells you which papers and authors at a conference are worth your time, given your own work. NeurIPS 2026 is built in; other conferences work from a paper list you bring (see [Other conferences](#other-conferences-experimental), experimental). For NeurIPS, give it your NeurIPS paper (id or link), your name, or an abstract, or, in the optional profile mode, your name, ORCID or a paper list so it can cover all your work. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
 
 It runs on your own agent, with no accounts and no API keys. The search script uses only the Python standard library and a bundled snapshot of the NeurIPS 2026 program, taken 2026-10-17 to 2026-10-20, so sessions may have changed since: check neurips.cc for the official schedule.
 
 ## Install
 
-Pick one route. All need Python 3.9 or newer and nothing else. Tested on macOS only, with Python 3.9, 3.10 and 3.13; Windows and Linux are untested.
+Pick one route. All need Python 3.9 or newer and nothing else. Tested on macOS only, with Python 3.9, 3.10, 3.12 and 3.13; Windows and Linux are untested.
 
 **Claude Code plugin** (recommended):
 
@@ -48,6 +48,16 @@ cp -r conference-picks/plugins/conference-picks/skills/conference-picks ~/.agent
 Ask the same question as above, or type `$conference-picks`, or pick it with `/skills`. See "Using it in Codex" below for what was tested and what limits apply.
 
 **Other agents:** untested. Point the agent at `plugins/conference-picks/skills/conference-picks/SKILL.md` and tell it to follow it.
+
+## Other conferences (experimental)
+
+NeurIPS 2026 is bundled. For another conference, bring its paper list as a CSV or JSON file with title, authors and abstract (times are optional). Many conferences publish one on the same website software as NeurIPS: on the Downloads page of the conference site (for example `icml.cc/Downloads/2026`), choose csv and press Download Data. Then ask your question, naming the conference and the file:
+
+> I'm going to ICML 2026. Its paper list is `~/Downloads/ICML 2026 Events.csv`. My abstract is: ...
+
+The agent looks at the file, writes a column mapping, and `scripts/import_dataset.py` checks it. The import writes nothing if the file is not good enough (fewer than 50 records, missing titles, abstracts on under half of the papers, conflicting ids, times without a time zone). Otherwise it shows a report with three sample records for you to confirm and saves the dataset in `~/.conference-picks/<name>/` (set `CONFERENCE_PICKS_HOME` to move it). Later questions reuse it, and `python3 scripts/search.py list` shows what is installed. If the agent cannot write there (a read-only Codex folder, say), it is told to print the one import command for you to run in your own terminal.
+
+With no times in the file there is no grouping by session and no calendar file; picks are ranked and the answer says so. A dataset comes from one file: if abstracts and times are in different files, join them first. Status: the importer and the search were tested on the ICML 2026 file and on the raw NeurIPS files, by script; an agent running the whole flow has not been tested yet.
 
 ## Budgets
 
@@ -103,11 +113,11 @@ Codex's sandbox changes what works:
 
 ## Privacy
 
-The search script runs locally and sends nothing anywhere. The one exception is the optional `profile` command in profile mode, which sends the name, ORCID or paper titles you give it to api.openalex.org to look up your works. Whatever you give your agent goes to your agent's provider, as with any use of it.
+The search script and the importer run locally and send nothing anywhere. The one exception is the optional `profile` command in profile mode, which sends the name, ORCID or paper titles you give it to api.openalex.org to look up your works. Whatever you give your agent goes to your agent's provider, as with any use of it.
 
 ## Data
 
-A snapshot of public NeurIPS 2026 program data is bundled. See [DATA_NOTICE.md](plugins/conference-picks/skills/conference-picks/DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
+A snapshot of public NeurIPS 2026 program data is bundled; no other conference's data is. See [DATA_NOTICE.md](plugins/conference-picks/skills/conference-picks/DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
 
 ## Licence and contact
 
