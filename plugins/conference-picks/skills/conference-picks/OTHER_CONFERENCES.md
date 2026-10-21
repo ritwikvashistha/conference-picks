@@ -26,7 +26,7 @@ Ask for the conference's paper list as CSV or JSON (title, authors, abstract; ti
 ## 4. Import, then show the user the report
 `python3 ${CLAUDE_SKILL_DIR}/scripts/import_dataset.py import <file> --mapping mapping.json` writes to `~/.conference-picks/<slug>/`. Add `--out <folder>` if you cannot write there, and pass the same folder to `--data`. Show the user the report before any picks: the record count, the abstract share, the schedule line, any warning and the three samples, and ask whether names, titles and times look right. If it refuses, fix the mapping from the message (it lists the real columns) or tell the user what the file lacks. Do not weaken the checks.
 
-If you cannot write files at all, print the import command with the real paths for the user to run in their own terminal, and wait.
+If you cannot write files at all, print the mapping JSON and the import command with the real paths (the user saves the mapping to a file first) for the user to run in their own terminal, and wait.
 
 ## 5. Then the usual steps
 Follow SKILL.md from step 2 with `--data <slug>` on each command, for example `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py find --data <slug> --text-file abstract.txt --text-file brief.txt` (or `--paper <id>` when the user's own paper is in the dataset). Say in your first line which conference and dataset (name and snapshot date) the picks come from.
