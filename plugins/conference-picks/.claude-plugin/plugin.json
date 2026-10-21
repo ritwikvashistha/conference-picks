@@ -1,10 +1,10 @@
 {
-  "name": "neurips-picks",
+  "name": "conference-picks",
   "version": "0.1.2",
   "description": "Pick the NeurIPS 2026 papers and authors most relevant to your own work, grouped by site, session and local time",
   "author": {
     "name": "Ritwik Vashistha"
   },
   "license": "MIT",
-  "repository": "https://github.com/ritwikvashistha/neurips-picks"
+  "repository": "https://github.com/ritwikvashistha/conference-picks"
 }

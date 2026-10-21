@@ -1,4 +1,4 @@
-# Testing neurips-picks
+# Testing conference-picks
 
 Thanks for testing. It takes about 30 minutes: run the skill on your own work, then rate the papers it picks. The ratings are what matter. Nobody can tell whether the picks are any good without people who know the field.
 

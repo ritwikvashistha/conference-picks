@@ -1,5 +1,5 @@
 ---
-name: neurips-picks
+name: conference-picks
 description: Pick the NeurIPS 2026 papers and authors most relevant to the user's own work, grouped by site, session and local time. Use when the user is attending NeurIPS 2026 and gives a paper, name, Google Scholar link or abstract, or asks what to see.
 ---
 
@@ -7,7 +7,7 @@ description: Pick the NeurIPS 2026 papers and authors most relevant to the user'
 
 Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex. Do not fetch neurips.cc or other web pages to check or fill in details: the bundled data already holds the sessions and times.
 
-Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. Claude Code expands it; other agents (such as Codex) do not, so use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/neurips-picks/` (create it first) and pass full paths, not in the user's project. If you cannot write files (read-only sandbox), pass the brief inline with `--text` and print any deliverable in your reply. Write deliverables (`.ics`, `.csv`) to the current folder.
+Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. Claude Code expands it; other agents (such as Codex) do not, so use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/conference-picks/` (create it first) and pass full paths, not in the user's project. If you cannot write files (read-only sandbox), pass the brief inline with `--text` and print any deliverable in your reply. Write deliverables (`.ics`, `.csv`) to the current folder.
 
 ## 1. Get the user's work
 Two ways in. The default is cheaper; profile mode is optional and costs more tokens (see "Profile mode" below).
@@ -49,9 +49,9 @@ Group the picks by site (Sydney, Atlanta, Paris), then by session time, in date 
 
 Per paper: title linked to `https://neurips.cc/virtual/2026/poster/<id>`, authors, one reason. End with up to 8 authors worth talking to (people on several picks; if nobody repeats, the authors of the picks closest to the user's work) and why. Leave out the user's own co-authors, and mark any pick that is in the same session slot as one of the user's own papers ("same slot as your poster"). Add a last line saying the times come from a snapshot (date in `DATA_NOTICE.md`) and may have changed.
 
-If the user wants a calendar file: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py ics <picked ids> > neurips-picks.ics` (times are converted to UTC; picks without a session yet are skipped and reported). To find other people from the user's institution: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py who --affil "UT Austin"` (any common name or acronym works: "MIT", "Tsinghua", "Google DeepMind"; spelling variants are merged). The first line gives the number of papers and author slots and the split by site. Unknown names fall back to a regex on the raw affiliation.
+If the user wants a calendar file: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py ics <picked ids> > conference-picks.ics` (times are converted to UTC; picks without a session yet are skipped and reported). To find other people from the user's institution: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py who --affil "UT Austin"` (any common name or acronym works: "MIT", "Tsinghua", "Google DeepMind"; spelling variants are merged). The first line gives the number of papers and author slots and the split by site. Unknown names fall back to a regex on the raw affiliation.
 
-If the user wants a spreadsheet to share with labmates: write one line per pick to a file, `<id><TAB><one-line reason>`, best first, then run `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py csv <picked ids> --reasons reasons.tsv > neurips-picks.csv`. Columns: rank, id, title, authors, institutions, site, session, local start and end, hall, oral, link, reason.
+If the user wants a spreadsheet to share with labmates: write one line per pick to a file, `<id><TAB><one-line reason>`, best first, then run `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py csv <picked ids> --reasons reasons.tsv > conference-picks.csv`. Columns: rank, id, title, authors, institutions, site, session, local start and end, hall, oral, link, reason.
 
 ## Profile mode (optional, more tokens)
 Use it when the user wants the picks based on their whole body of work, not one paper. It replaces steps 1 and 3; steps 2, 4 and 5 still apply, with the changes below.

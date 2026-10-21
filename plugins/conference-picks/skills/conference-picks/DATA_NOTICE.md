@@ -1,6 +1,6 @@
 # Data notice
 
-`neurips-picks` ships a snapshot of public NeurIPS 2026 program data so that it can run offline on your own machine. This page says what is in it, where it came from, and how to ask for a correction or removal.
+`conference-picks` ships a snapshot of public NeurIPS 2026 program data so that it can run offline on your own machine. This page says what is in it, where it came from, and how to ask for a correction or removal.
 
 ## What is included
 

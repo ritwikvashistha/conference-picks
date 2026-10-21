@@ -1,4 +1,4 @@
-# neurips-picks
+# conference-picks
 
 An agent skill that tells you which NeurIPS 2026 papers and authors are worth your time, given your own work. Give it your NeurIPS paper (id or link), your name, or an abstract, or, in the optional profile mode, your name, ORCID or a paper list so it can cover all your work. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
 
@@ -11,43 +11,43 @@ Pick one route. All need Python 3.9 or newer and nothing else. Tested on macOS o
 **Claude Code plugin** (recommended):
 
 ```bash
-claude plugin marketplace add ritwikvashistha/neurips-picks
-claude plugin install neurips-picks@neurips-picks
+claude plugin marketplace add ritwikvashistha/conference-picks
+claude plugin install conference-picks@conference-picks
 ```
 
 The same two commands work inside a session as `/plugin marketplace add ...` and `/plugin install ...`. Then just ask, for example:
 
 > I'm going to NeurIPS 2026. My paper there is id 148353. Which papers should I see?
 
-You can also run it as `/neurips-picks:neurips-picks`.
+You can also run it as `/conference-picks:conference-picks`.
 
 **Standalone skill in Claude Code:**
 
 ```bash
-git clone https://github.com/ritwikvashistha/neurips-picks
-cp -r neurips-picks/plugins/neurips-picks/skills/neurips-picks ~/.claude/skills/
+git clone https://github.com/ritwikvashistha/conference-picks
+cp -r conference-picks/plugins/conference-picks/skills/conference-picks ~/.claude/skills/
 ```
 
-**claude.ai:** run `python3 tools/make_zip.py` to build `dist/neurips-picks.zip`, then upload it as a skill in your claude.ai settings. This route is untested, and profile mode needs access to api.openalex.org, which a sandboxed environment may block.
+**claude.ai:** run `python3 tools/make_zip.py` to build `dist/conference-picks.zip`, then upload it as a skill in your claude.ai settings. This route is untested, and profile mode needs access to api.openalex.org, which a sandboxed environment may block.
 
 **Codex** (CLI, IDE extension and app): Codex reads the same marketplace files, so the plugin route works the same way. Start a new session afterwards.
 
 ```bash
-codex plugin marketplace add ritwikvashistha/neurips-picks
-codex plugin add neurips-picks@neurips-picks
+codex plugin marketplace add ritwikvashistha/conference-picks
+codex plugin add conference-picks@conference-picks
 ```
 
 Or install the standalone skill. Codex looks in `~/.agents/skills/` (all projects) and in `.agents/skills/` from the project folder up to the repository root (that repository only):
 
 ```bash
-git clone https://github.com/ritwikvashistha/neurips-picks
+git clone https://github.com/ritwikvashistha/conference-picks
 mkdir -p ~/.agents/skills
-cp -r neurips-picks/plugins/neurips-picks/skills/neurips-picks ~/.agents/skills/
+cp -r conference-picks/plugins/conference-picks/skills/conference-picks ~/.agents/skills/
 ```
 
-Ask the same question as above, or type `$neurips-picks`, or pick it with `/skills`. See "Using it in Codex" below for what was tested and what limits apply.
+Ask the same question as above, or type `$conference-picks`, or pick it with `/skills`. See "Using it in Codex" below for what was tested and what limits apply.
 
-**Other agents:** untested. Point the agent at `plugins/neurips-picks/skills/neurips-picks/SKILL.md` and tell it to follow it.
+**Other agents:** untested. Point the agent at `plugins/conference-picks/skills/conference-picks/SKILL.md` and tell it to follow it.
 
 ## Budgets
 
@@ -107,7 +107,7 @@ The search script runs locally and sends nothing anywhere. The one exception is 
 
 ## Data
 
-A snapshot of public NeurIPS 2026 program data is bundled. See [DATA_NOTICE.md](plugins/neurips-picks/skills/neurips-picks/DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
+A snapshot of public NeurIPS 2026 program data is bundled. See [DATA_NOTICE.md](plugins/conference-picks/skills/conference-picks/DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
 
 ## Licence and contact
 
