@@ -2,11 +2,11 @@
 
 An agent skill that tells you which NeurIPS 2026 papers and authors are worth your time, given your own work. Give it your NeurIPS paper (id or link), your name, or an abstract, or, in the optional profile mode, your name, ORCID or a paper list so it can cover all your work. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
 
-It runs on your own agent, with no accounts and no API keys. The search script uses only the Python standard library and a bundled snapshot of the NeurIPS 2026 program.
+It runs on your own agent, with no accounts and no API keys. The search script uses only the Python standard library and a bundled snapshot of the NeurIPS 2026 program, taken 2026-10-17 to 2026-10-20, so sessions may have changed since: check neurips.cc for the official schedule.
 
 ## Install
 
-Pick one route. All need Python 3.9 or newer and nothing else.
+Pick one route. All need Python 3.9 or newer and nothing else. Tested on macOS only, with Python 3.9, 3.10 and 3.13; Windows and Linux are untested.
 
 **Claude Code plugin** (recommended):
 
@@ -15,7 +15,7 @@ claude plugin marketplace add ritwikvashistha/neurips-picks
 claude plugin install neurips-picks@neurips-picks
 ```
 
-The same two commands work inside a session as `/plugin marketplace add ...` and `/plugin install ...`. While the repository is private, you need GitHub access to it. Then just ask, for example:
+The same two commands work inside a session as `/plugin marketplace add ...` and `/plugin install ...`. Then just ask, for example:
 
 > I'm going to NeurIPS 2026. My paper there is id 148353. Which papers should I see?
 
@@ -83,7 +83,7 @@ Checked on six papers from different research areas, with a separate LLM judging
 
 ## Using it in Codex
 
-Checked on 2026-10-20 on macOS with Codex CLI 0.163.0-alpha.10.2 (the CLI bundled with the ChatGPT desktop app). In three sessions with the skill in a project's `.agents/skills/` folder, and in one with the plugin installed from a local checkout, the prompt "I'm going to NeurIPS 2026, my paper is id 148353, which papers should I see?" was enough for Codex to pick up the skill, run the bundled script and return a grouped list; one session also produced a calendar. After installing from this repository on GitHub with the commands above (while it was private), a shorter session found the skill and ran its script from the plugin cache. The Codex docs describe no equivalent of `${CLAUDE_SKILL_DIR}`, and in these sessions Codex read SKILL.md as plain text and substituted the skill folder's path itself.
+Checked on 2026-10-20 on macOS with Codex CLI 0.163.0-alpha.10.2 (the CLI bundled with the ChatGPT desktop app). In five sessions with the skill in a project's `.agents/skills/` folder, and in one with the plugin installed from a local checkout, the prompt "I'm going to NeurIPS 2026, my paper is id 148353, which papers should I see?" was enough for Codex to pick up the skill, run the bundled script and return a grouped list; one session also produced a calendar. After installing from this repository on GitHub with the commands above, a shorter session found the skill and ran its script from the plugin cache. The Codex docs describe no equivalent of `${CLAUDE_SKILL_DIR}`, and in these sessions Codex read SKILL.md as plain text and substituted the skill folder's path itself.
 
 Not tested: the IDE extension, the desktop app's own chat, Windows and Linux, a full picks session after the GitHub install (only a short check was run), and the `~/.agents/skills/` location. Result quality was not evaluated, and the numbers in this README come from Claude agents only. One Codex session reported about 320K input tokens (about 264K cached) and 8K output tokens, which is counted differently from the Claude figures above, so do not compare them.
 
@@ -93,7 +93,7 @@ Codex's sandbox changes what works:
 - **Profile mode ran end to end once in Codex** (a well-known researcher's name, network allowed for that run): OpenAlex lookup, three areas, a search per area, and a 20-pick list in the skill's format with the default 50/30/20 split. That session used about 1.7M input tokens (about 1.6M cached) and 19K output tokens, against about 0.3M input for the single-paper sessions. Besides the skill's steps, the agent wrote its own OpenAlex download scripts (one got an HTTP 401), ran three web searches and fetched 23 neurips.cc pages to check session times. One session and one researcher, so do not expect these numbers.
 - **A folder Codex has not marked as trusted started read-only** in my `codex exec` tests. The agent then cannot write scratch files or `.ics` and `.csv` files. SKILL.md tells it to pass the search brief inline and print deliverables in its reply, and that worked for a calendar request. In `workspace-write`, `/tmp` and the project folder are writable.
 - `codex exec` cannot answer the budget question, so it uses Standard.
-- In three of the four sessions Codex read part or most of `search.py` before using it, which adds tokens.
+- In six of the seven sessions Codex read part or most of `search.py` before using it, which adds tokens.
 
 ## Limits
 

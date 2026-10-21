@@ -5,7 +5,7 @@ description: Pick the NeurIPS 2026 papers and authors most relevant to the user'
 
 # NeurIPS 2026 picks
 
-Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex.
+Everything runs locally with Python 3.9+ (standard library only), except the optional `profile` command in profile mode, which contacts OpenAlex. Do not fetch neurips.cc or other web pages to check or fill in details: the bundled data already holds the sessions and times.
 
 Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. Claude Code expands it; other agents (such as Codex) do not, so use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/neurips-picks/` (create it first) and pass full paths, not in the user's project. If you cannot write files (read-only sandbox), pass the brief inline with `--text` and print any deliverable in your reply. Write deliverables (`.ics`, `.csv`) to the current folder.
 
@@ -40,14 +40,14 @@ Keep every `show` output under about 15 KB, because bigger outputs get truncated
 - **Deep:** run `show` on all 150 ids in batches, without `--chars`. Keep the best.
 
 ## 4. Judge
-Relevant means the user would learn something from the paper or gain from talking to its authors, given their own abstract. Rank them; no tiers. Give one concrete reason per paper that points at the user's work (a shared problem, method or data), not just a shared keyword. Aim for 15-20 picks; go up to 25 when the topic is broad and many candidates are strong; fewer is fine when the rest are weak. Do not pad.
+Relevant means the user would learn something from the paper or gain from talking to its authors, given their own abstract. Rank them; no tiers. A paper that shares an author with the user's own paper(s) is their group's work: do not rank it, name it in one closing line instead. Give one concrete reason per paper that points at the user's work (a shared problem, method or data), not just a shared keyword. Aim for 15-20 picks; go up to 25 when the topic is broad and many candidates are strong; fewer is fine when the rest are weak. Do not pad.
 
 ## 5. Output
 Markdown. First line: where and when the user's own papers are presented; say "no session scheduled yet" for one without a slot.
 
 Group the picks by site (Sydney, Atlanta, Paris), then by session time, in date order. The `where` column already has the weekday, date and local time at that site, so copy it as given. Put picks with `-` under "Location not yet known" last, in rank order. Inside a group, order by your ranking and keep the overall rank on every line (for example `#3`), so the ranking is not lost by grouping.
 
-Per paper: title linked to `https://neurips.cc/virtual/2026/poster/<id>`, authors, one reason. End with up to 8 authors worth talking to (people on several picks; if nobody repeats, the authors of the picks closest to the user's work) and why. Leave out the user's own co-authors, and mark any pick that is in the same session slot as one of the user's own papers ("same slot as your poster").
+Per paper: title linked to `https://neurips.cc/virtual/2026/poster/<id>`, authors, one reason. End with up to 8 authors worth talking to (people on several picks; if nobody repeats, the authors of the picks closest to the user's work) and why. Leave out the user's own co-authors, and mark any pick that is in the same session slot as one of the user's own papers ("same slot as your poster"). Add a last line saying the times come from a snapshot (date in `DATA_NOTICE.md`) and may have changed.
 
 If the user wants a calendar file: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py ics <picked ids> > neurips-picks.ics` (times are converted to UTC; picks without a session yet are skipped and reported). To find other people from the user's institution: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py who --affil "UT Austin"` (any common name or acronym works: "MIT", "Tsinghua", "Google DeepMind"; spelling variants are merged). The first line gives the number of papers and author slots and the split by site. Unknown names fall back to a regex on the raw affiliation.
 
