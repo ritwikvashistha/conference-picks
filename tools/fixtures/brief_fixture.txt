@@ -1,0 +1,25 @@
+maximum mean discrepancy
+kernel two-sample test
+deconvolution
+measurement error models
+errors-in-variables
+denoising
+nonparametric Bayesian
+latent variable models
+distribution regression
+optimal transport
+Wasserstein distance
+score matching
+diffusion models
+noisy labels
+generative models for scientific data
+Gaussian process
+reproducing kernel Hilbert space
+kernel mean embedding
+empirical Bayes
+mixture models
+density estimation
+inverse problems
+uncertainty quantification
+conformal prediction
+simulation-based inference

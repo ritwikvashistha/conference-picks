@@ -1,0 +1,745 @@
+{
+ "data_sha256": {
+  "institutions.json": "6eeb3fe99351d7f42d24fa70a2537dc064b56abefb8b9a1194b9c3c629e2affe",
+  "papers.json.gz": "92fa1c62edfaf6911e395ce4c029c1506aec89706634de284b1e752866df7c2d"
+ },
+ "python": {
+  "3.10": {
+   "csv": [
+    {
+     "bytes": 1704,
+     "rc": 0,
+     "stderr": "806e34f724787e39d333d62cc96c04db47aec56435219684ad079b0d8f6895d2",
+     "stdout": "81dcf7a71fc8369316d0dcd885fdd88d26f0aa1e536ee5fe68841375c080efa1"
+    }
+   ],
+   "csv_no_reasons": [
+    {
+     "bytes": 959,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0c54fc5c2998f0a18f33e6947a63c2acaa7f0c9c6cf03021fa04f4e4052ea605"
+    }
+   ],
+   "find_bad_paper_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "2a6ce837dabf049562b17bf23bce1511af664a09a3b662f3233f389e7e1419aa",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "0ab0ae2c179306b8f33cc9b923f4f2c2ee7db8341a6435f9a4cbdf69d7cb4a00",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_paper": [
+    {
+     "bytes": 25341,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "680c611ae060aa99d9167c9a48f5c6c0b920be27b8457e88def64c520ef851aa"
+    }
+   ],
+   "find_paper_brief": [
+    {
+     "bytes": 25867,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "84be79e6456683479ea2ce815f8ffd5fc242539f1924eed6a581586f53661833"
+    }
+   ],
+   "find_profile": [
+    {
+     "bytes": 227,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "1fc10381313f1d8b95887715d8d3c4ce6b442d37e76b6641c4cd03ff91f290a4"
+    },
+    {
+     "bytes": 4297,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "9fb3fd12ead1e5a74e9a0426f7398d721ef928956a97cde33dd483d2eeacbfb1"
+    }
+   ],
+   "find_text": [
+    {
+     "bytes": 6159,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "012e66ecdb6a7ac163853fff97aedc0214222ad2eb41e671d6e295dc321402ba"
+    }
+   ],
+   "find_text_files": [
+    {
+     "bytes": 6716,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "ac6397aed01f6bcd969998b077e75d42d70469dd18f996917cbe9dd8132b60e3"
+    }
+   ],
+   "find_two_papers_k60": [
+    {
+     "bytes": 10115,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "a9c33181f989d51980cbb29915677e837c083c31031d43eac6fd02b6113b85e8"
+    }
+   ],
+   "ics": [
+    {
+     "bytes": 1888,
+     "rc": 0,
+     "stderr": "75dfdef7c509fc46906588c531f38c52382a1e2497ae85d6ecc2b8eaea19fa94",
+     "stdout": "9b002223b52a8269d635a380dcc1aa12c4886160bedc101aacdd9a52ee4d28e9"
+    }
+   ],
+   "profile_bibtex": [
+    {
+     "bytes": 255,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "6ae6e1196a91196b637b4c6a493186998654b7f07034d37af890724b071886c6"
+    }
+   ],
+   "show_batch": [
+    {
+     "bytes": 2247,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "527d570beb7c261357b352101adc6a2ddefbb88f66e24d036afefc25a2685fd9"
+    }
+   ],
+   "show_missing": [
+    {
+     "bytes": 358,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4f252053e54017004b06cd070939819945ef88b4bd14d55517d5bf3acf0442d1"
+    }
+   ],
+   "show_no_abstract": [
+    {
+     "bytes": 2474,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "30a0f1ddd46ce2ada12605e4a8aac731752efb3dde3f12176ae5fa4c0fd18296"
+    }
+   ],
+   "who_affil_mit": [
+    {
+     "bytes": 61174,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4979d8d845d1d77e7a7ec20f6362191a1a37ada0a679c9c29cda83771e1f55ab"
+    }
+   ],
+   "who_affil_regex": [
+    {
+     "bytes": 78,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "91e26bc844ccf8f93fa3c675d8bac4cfae7e8f25d73adbfdcccd4dd1f1015e2f"
+    }
+   ],
+   "who_affil_ut": [
+    {
+     "bytes": 24835,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0b4581156a2c58b3fd897c70661844d2aa0bc96a6bf22f80393cba985c3ecd2a"
+    }
+   ],
+   "who_name": [
+    {
+     "bytes": 530,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "b963eba4921517c35b8c066b08ae3097e6f1d48a935f2290f256c545962f856d"
+    }
+   ],
+   "who_name_affil": [
+    {
+     "bytes": 609,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "5ec7590bda9ba4c9f7a8d49f17745e5e9d49d9677b3d2d03d3e39fc0c5bf2c4a"
+    }
+   ],
+   "who_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "fb3c4aa3cc4f5542d0d4a18a4c711279270672a53598f3accb9ed48fd4a543d3",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "who_none": [
+    {
+     "bytes": 32,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "52645cc60f2e36964ee2fc3776682b83475a865b95576cff354299c5433f1782"
+    }
+   ]
+  },
+  "3.12": {
+   "csv": [
+    {
+     "bytes": 1704,
+     "rc": 0,
+     "stderr": "806e34f724787e39d333d62cc96c04db47aec56435219684ad079b0d8f6895d2",
+     "stdout": "81dcf7a71fc8369316d0dcd885fdd88d26f0aa1e536ee5fe68841375c080efa1"
+    }
+   ],
+   "csv_no_reasons": [
+    {
+     "bytes": 959,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0c54fc5c2998f0a18f33e6947a63c2acaa7f0c9c6cf03021fa04f4e4052ea605"
+    }
+   ],
+   "find_bad_paper_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "2a6ce837dabf049562b17bf23bce1511af664a09a3b662f3233f389e7e1419aa",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "0ab0ae2c179306b8f33cc9b923f4f2c2ee7db8341a6435f9a4cbdf69d7cb4a00",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_paper": [
+    {
+     "bytes": 25341,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "141173ee366efbb701b83e0d3a2577d65f567696f4d3ee16e4d41fc617dc178b"
+    }
+   ],
+   "find_paper_brief": [
+    {
+     "bytes": 25867,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "05e534df4f3ff8786f2109c88675b051ae7a7c34ae4fa39ed9f8b3f74f5fa2d0"
+    }
+   ],
+   "find_profile": [
+    {
+     "bytes": 227,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "1fc10381313f1d8b95887715d8d3c4ce6b442d37e76b6641c4cd03ff91f290a4"
+    },
+    {
+     "bytes": 4297,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "9fb3fd12ead1e5a74e9a0426f7398d721ef928956a97cde33dd483d2eeacbfb1"
+    }
+   ],
+   "find_text": [
+    {
+     "bytes": 6159,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "1b944a774538c8a021acfb1485e7bca100bc1133383063ba24895aab870c97a0"
+    }
+   ],
+   "find_text_files": [
+    {
+     "bytes": 6712,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4bfbf9e27ac17df501a9dd600260041683411e1fba0a6ab04f2c0f7d33470beb"
+    }
+   ],
+   "find_two_papers_k60": [
+    {
+     "bytes": 10115,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "9c6fd4299e7f638b7577779e23e493f182d648ac9e258f7032a7fdde73a31e2c"
+    }
+   ],
+   "ics": [
+    {
+     "bytes": 1888,
+     "rc": 0,
+     "stderr": "75dfdef7c509fc46906588c531f38c52382a1e2497ae85d6ecc2b8eaea19fa94",
+     "stdout": "9b002223b52a8269d635a380dcc1aa12c4886160bedc101aacdd9a52ee4d28e9"
+    }
+   ],
+   "profile_bibtex": [
+    {
+     "bytes": 255,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "6ae6e1196a91196b637b4c6a493186998654b7f07034d37af890724b071886c6"
+    }
+   ],
+   "show_batch": [
+    {
+     "bytes": 2247,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "527d570beb7c261357b352101adc6a2ddefbb88f66e24d036afefc25a2685fd9"
+    }
+   ],
+   "show_missing": [
+    {
+     "bytes": 358,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4f252053e54017004b06cd070939819945ef88b4bd14d55517d5bf3acf0442d1"
+    }
+   ],
+   "show_no_abstract": [
+    {
+     "bytes": 2474,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "30a0f1ddd46ce2ada12605e4a8aac731752efb3dde3f12176ae5fa4c0fd18296"
+    }
+   ],
+   "who_affil_mit": [
+    {
+     "bytes": 61174,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4979d8d845d1d77e7a7ec20f6362191a1a37ada0a679c9c29cda83771e1f55ab"
+    }
+   ],
+   "who_affil_regex": [
+    {
+     "bytes": 78,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "91e26bc844ccf8f93fa3c675d8bac4cfae7e8f25d73adbfdcccd4dd1f1015e2f"
+    }
+   ],
+   "who_affil_ut": [
+    {
+     "bytes": 24835,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0b4581156a2c58b3fd897c70661844d2aa0bc96a6bf22f80393cba985c3ecd2a"
+    }
+   ],
+   "who_name": [
+    {
+     "bytes": 530,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "b963eba4921517c35b8c066b08ae3097e6f1d48a935f2290f256c545962f856d"
+    }
+   ],
+   "who_name_affil": [
+    {
+     "bytes": 609,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "5ec7590bda9ba4c9f7a8d49f17745e5e9d49d9677b3d2d03d3e39fc0c5bf2c4a"
+    }
+   ],
+   "who_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "fb3c4aa3cc4f5542d0d4a18a4c711279270672a53598f3accb9ed48fd4a543d3",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "who_none": [
+    {
+     "bytes": 32,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "52645cc60f2e36964ee2fc3776682b83475a865b95576cff354299c5433f1782"
+    }
+   ]
+  },
+  "3.13": {
+   "csv": [
+    {
+     "bytes": 1704,
+     "rc": 0,
+     "stderr": "806e34f724787e39d333d62cc96c04db47aec56435219684ad079b0d8f6895d2",
+     "stdout": "81dcf7a71fc8369316d0dcd885fdd88d26f0aa1e536ee5fe68841375c080efa1"
+    }
+   ],
+   "csv_no_reasons": [
+    {
+     "bytes": 959,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0c54fc5c2998f0a18f33e6947a63c2acaa7f0c9c6cf03021fa04f4e4052ea605"
+    }
+   ],
+   "find_bad_paper_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "2a6ce837dabf049562b17bf23bce1511af664a09a3b662f3233f389e7e1419aa",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "0ab0ae2c179306b8f33cc9b923f4f2c2ee7db8341a6435f9a4cbdf69d7cb4a00",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_paper": [
+    {
+     "bytes": 25341,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "141173ee366efbb701b83e0d3a2577d65f567696f4d3ee16e4d41fc617dc178b"
+    }
+   ],
+   "find_paper_brief": [
+    {
+     "bytes": 25867,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "05e534df4f3ff8786f2109c88675b051ae7a7c34ae4fa39ed9f8b3f74f5fa2d0"
+    }
+   ],
+   "find_profile": [
+    {
+     "bytes": 227,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "1fc10381313f1d8b95887715d8d3c4ce6b442d37e76b6641c4cd03ff91f290a4"
+    },
+    {
+     "bytes": 4297,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "9fb3fd12ead1e5a74e9a0426f7398d721ef928956a97cde33dd483d2eeacbfb1"
+    }
+   ],
+   "find_text": [
+    {
+     "bytes": 6159,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "1b944a774538c8a021acfb1485e7bca100bc1133383063ba24895aab870c97a0"
+    }
+   ],
+   "find_text_files": [
+    {
+     "bytes": 6712,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4bfbf9e27ac17df501a9dd600260041683411e1fba0a6ab04f2c0f7d33470beb"
+    }
+   ],
+   "find_two_papers_k60": [
+    {
+     "bytes": 10115,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "9c6fd4299e7f638b7577779e23e493f182d648ac9e258f7032a7fdde73a31e2c"
+    }
+   ],
+   "ics": [
+    {
+     "bytes": 1888,
+     "rc": 0,
+     "stderr": "75dfdef7c509fc46906588c531f38c52382a1e2497ae85d6ecc2b8eaea19fa94",
+     "stdout": "9b002223b52a8269d635a380dcc1aa12c4886160bedc101aacdd9a52ee4d28e9"
+    }
+   ],
+   "profile_bibtex": [
+    {
+     "bytes": 255,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "6ae6e1196a91196b637b4c6a493186998654b7f07034d37af890724b071886c6"
+    }
+   ],
+   "show_batch": [
+    {
+     "bytes": 2247,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "527d570beb7c261357b352101adc6a2ddefbb88f66e24d036afefc25a2685fd9"
+    }
+   ],
+   "show_missing": [
+    {
+     "bytes": 358,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4f252053e54017004b06cd070939819945ef88b4bd14d55517d5bf3acf0442d1"
+    }
+   ],
+   "show_no_abstract": [
+    {
+     "bytes": 2474,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "30a0f1ddd46ce2ada12605e4a8aac731752efb3dde3f12176ae5fa4c0fd18296"
+    }
+   ],
+   "who_affil_mit": [
+    {
+     "bytes": 61174,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4979d8d845d1d77e7a7ec20f6362191a1a37ada0a679c9c29cda83771e1f55ab"
+    }
+   ],
+   "who_affil_regex": [
+    {
+     "bytes": 78,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "91e26bc844ccf8f93fa3c675d8bac4cfae7e8f25d73adbfdcccd4dd1f1015e2f"
+    }
+   ],
+   "who_affil_ut": [
+    {
+     "bytes": 24835,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0b4581156a2c58b3fd897c70661844d2aa0bc96a6bf22f80393cba985c3ecd2a"
+    }
+   ],
+   "who_name": [
+    {
+     "bytes": 530,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "b963eba4921517c35b8c066b08ae3097e6f1d48a935f2290f256c545962f856d"
+    }
+   ],
+   "who_name_affil": [
+    {
+     "bytes": 609,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "5ec7590bda9ba4c9f7a8d49f17745e5e9d49d9677b3d2d03d3e39fc0c5bf2c4a"
+    }
+   ],
+   "who_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "fb3c4aa3cc4f5542d0d4a18a4c711279270672a53598f3accb9ed48fd4a543d3",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "who_none": [
+    {
+     "bytes": 32,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "52645cc60f2e36964ee2fc3776682b83475a865b95576cff354299c5433f1782"
+    }
+   ]
+  },
+  "3.9": {
+   "csv": [
+    {
+     "bytes": 1704,
+     "rc": 0,
+     "stderr": "806e34f724787e39d333d62cc96c04db47aec56435219684ad079b0d8f6895d2",
+     "stdout": "81dcf7a71fc8369316d0dcd885fdd88d26f0aa1e536ee5fe68841375c080efa1"
+    }
+   ],
+   "csv_no_reasons": [
+    {
+     "bytes": 959,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0c54fc5c2998f0a18f33e6947a63c2acaa7f0c9c6cf03021fa04f4e4052ea605"
+    }
+   ],
+   "find_bad_paper_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "2a6ce837dabf049562b17bf23bce1511af664a09a3b662f3233f389e7e1419aa",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "0ab0ae2c179306b8f33cc9b923f4f2c2ee7db8341a6435f9a4cbdf69d7cb4a00",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "find_paper": [
+    {
+     "bytes": 25341,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "680c611ae060aa99d9167c9a48f5c6c0b920be27b8457e88def64c520ef851aa"
+    }
+   ],
+   "find_paper_brief": [
+    {
+     "bytes": 25867,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "84be79e6456683479ea2ce815f8ffd5fc242539f1924eed6a581586f53661833"
+    }
+   ],
+   "find_profile": [
+    {
+     "bytes": 227,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "1fc10381313f1d8b95887715d8d3c4ce6b442d37e76b6641c4cd03ff91f290a4"
+    },
+    {
+     "bytes": 4297,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "9fb3fd12ead1e5a74e9a0426f7398d721ef928956a97cde33dd483d2eeacbfb1"
+    }
+   ],
+   "find_text": [
+    {
+     "bytes": 6159,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "012e66ecdb6a7ac163853fff97aedc0214222ad2eb41e671d6e295dc321402ba"
+    }
+   ],
+   "find_text_files": [
+    {
+     "bytes": 6716,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "ac6397aed01f6bcd969998b077e75d42d70469dd18f996917cbe9dd8132b60e3"
+    }
+   ],
+   "find_two_papers_k60": [
+    {
+     "bytes": 10115,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "a9c33181f989d51980cbb29915677e837c083c31031d43eac6fd02b6113b85e8"
+    }
+   ],
+   "ics": [
+    {
+     "bytes": 1888,
+     "rc": 0,
+     "stderr": "75dfdef7c509fc46906588c531f38c52382a1e2497ae85d6ecc2b8eaea19fa94",
+     "stdout": "9b002223b52a8269d635a380dcc1aa12c4886160bedc101aacdd9a52ee4d28e9"
+    }
+   ],
+   "profile_bibtex": [
+    {
+     "bytes": 255,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "6ae6e1196a91196b637b4c6a493186998654b7f07034d37af890724b071886c6"
+    }
+   ],
+   "show_batch": [
+    {
+     "bytes": 2247,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "527d570beb7c261357b352101adc6a2ddefbb88f66e24d036afefc25a2685fd9"
+    }
+   ],
+   "show_missing": [
+    {
+     "bytes": 358,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4f252053e54017004b06cd070939819945ef88b4bd14d55517d5bf3acf0442d1"
+    }
+   ],
+   "show_no_abstract": [
+    {
+     "bytes": 2474,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "30a0f1ddd46ce2ada12605e4a8aac731752efb3dde3f12176ae5fa4c0fd18296"
+    }
+   ],
+   "who_affil_mit": [
+    {
+     "bytes": 61174,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "4979d8d845d1d77e7a7ec20f6362191a1a37ada0a679c9c29cda83771e1f55ab"
+    }
+   ],
+   "who_affil_regex": [
+    {
+     "bytes": 78,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "91e26bc844ccf8f93fa3c675d8bac4cfae7e8f25d73adbfdcccd4dd1f1015e2f"
+    }
+   ],
+   "who_affil_ut": [
+    {
+     "bytes": 24835,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "0b4581156a2c58b3fd897c70661844d2aa0bc96a6bf22f80393cba985c3ecd2a"
+    }
+   ],
+   "who_name": [
+    {
+     "bytes": 530,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "b963eba4921517c35b8c066b08ae3097e6f1d48a935f2290f256c545962f856d"
+    }
+   ],
+   "who_name_affil": [
+    {
+     "bytes": 609,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "5ec7590bda9ba4c9f7a8d49f17745e5e9d49d9677b3d2d03d3e39fc0c5bf2c4a"
+    }
+   ],
+   "who_noargs_error": [
+    {
+     "bytes": 0,
+     "rc": 1,
+     "stderr": "fb3c4aa3cc4f5542d0d4a18a4c711279270672a53598f3accb9ed48fd4a543d3",
+     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+   ],
+   "who_none": [
+    {
+     "bytes": 32,
+     "rc": 0,
+     "stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "stdout": "52645cc60f2e36964ee2fc3776682b83475a865b95576cff354299c5433f1782"
+    }
+   ]
+  }
+ },
+ "ref": "neurips-only-0.1.2"
+}
