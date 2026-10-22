@@ -86,7 +86,7 @@ def paginate(tagged, per, head, foot):
         out.append(("\f" if ff else "") + text); ff = False
 
     for text, tag in tagged:
-        if n == per:
+        if n >= per and not (tag == prev and tag[0] == "title"):  # a title is not split over two pages, but its marker may start the next one, as in a real book
             if prev and prev[0] == "abs" and tag == prev:
                 split.add(tag[1])
             for x in foot(page):
@@ -198,6 +198,8 @@ class TextEntries(unittest.TestCase):
     # --- layout A: what comes out
     def test_every_entry_comes_out_with_its_title_abstract_presenter_day_block_session_and_room(self):
         self.assertEqual(len(self.a.truth), 60)
+        self.assertIn("\fPresenter:", self.a.text)  # a title above a page break, its marker at the top of the next page
+        self.assertIn("Book of Abstracts 2027\nAuthors:", self.b.text)
         self.imported(self.a, mapping("a"))
         self.check_all(self.a, self.records())
 

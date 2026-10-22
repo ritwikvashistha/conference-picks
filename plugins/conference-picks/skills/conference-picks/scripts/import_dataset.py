@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn a conference's paper list (CSV, JSON or JSONL, optionally .gz) into a dataset folder for search.py. Python 3 standard library only.
+"""Turn a conference's paper list (CSV, JSON or JSONL, optionally .gz) or the text of its book of abstracts into a dataset folder for search.py. Python 3 standard library only.
 
   import_dataset.py inspect FILE                                   # format, rows, columns with sample values
   import_dataset.py import FILE --mapping map.json [--out DIR]     # check, convert, write papers.json.gz, meta.json, institutions.json
@@ -13,10 +13,20 @@ The mapping (JSON) says which column holds what. The script checks it and writes
    "time": {"zone": "Europe/Paris"} | {"zones": {"<city>": "<zone>"}},                   # + "format": strptime format for times already local
    "meta": {"name": "ICML 2026", "slug": "icml2026", "paper_types": ["Poster"], "link_template": "https://.../{id}", "year": 2026}}
 Times with an offset (ISO, the default) are converted to the zone of their site. Default output: $CONFERENCE_PICKS_HOME or ~/.conference-picks, then the slug.
+{"id": {"sequence": true}} numbers the records 1, 2, ... in file order.
+
+A book of abstracts (the text from `pdftotext -layout`, one column) takes a "text" block; its entries become the records, and the mapping names their columns:
+  "text": {"year": 2026, "start_after": "^Sunday 28 June$",         # the body starts at the first line that matches; "end_before" ends it (the index at the back)
+           "drop": ["^Programme\\s+Index$", "^\\d{1,3}$"],          # footer and page-number lines
+           "headings": {"day": "^...$", "block": "^(?P<block>.+): (?P<start>\\d+:\\d\\d)-(?P<end>\\d+:\\d\\d)$", "session": "^(?P<session>.+) \\((?P<room>.+)\\)$"},
+           "entry": {"marker": "^Presenter: (?P<presenter>.+)$"},     # one line per entry: the lines above it are the title, the lines below it the abstract
+           "day_overrides": {"Monday 30 June": "2026-06-29"}}         # a day heading whose date or weekday the book prints wrongly
+Every named group becomes a column, next to title, abstract and day (and page when "page_offset" is set: book page = PDF page + offset); headings carry forward.
 """
 import argparse, collections, csv, datetime as dt, gzip, hashlib, html, json, os, re, sys, unicodedata
 from zoneinfo import ZoneInfo
 
+MONTHS, WEEKDAYS = "jan feb mar apr may jun jul aug sep oct nov dec".split(), "mon tue wed thu fri sat sun".split()
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHIPPED = os.path.join(HERE, "..", "data", "institutions.json")  # its curated patterns also drive the table written for the new dataset
 MIN_RECORDS, MAX_NO_TITLE, MIN_ABSTRACTS, WARN_ABSTRACTS, MAX_DUP, MAX_SPAN_DAYS = 50, 0.05, 0.5, 0.8, 0.005, 21
@@ -64,6 +74,120 @@ def inspect(path):
         lines.append("  %s  %d%%  %s" % (c, 100 * len(vals) // max(len(recs), 1), " | ".join(samples)))
     out = "\n".join(lines + (["  ... %d more columns" % (len(cols) - 30)] if len(cols) > 30 else []))
     print(out if len(out) <= 3000 else out[:2950] + "\n... (cut)")
+
+
+def read_text(path):
+    with open(path, encoding="utf-8", errors="replace") as f:
+        return f.read()
+
+
+def parse_day(s, year):
+    """'Sunday 28 June', 'June 28th', 'Tue, Mar 9 2027' -> (date, weekday number or None), or None when no date can be read."""
+    low, months = s.lower(), "|".join(MONTHS)
+    m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(%s)[a-z]*\b|\b(%s)[a-z]*\.?\s+(\d{1,2})\b" % (months, months), low)
+    y = re.search(r"\b(\d{4})\b", s)
+    if not m:
+        return None
+    day, mon = (m.group(1), m.group(2)) if m.group(1) else (m.group(4), m.group(3))
+    try:
+        d = dt.date(int(y.group(1)) if y else year, MONTHS.index(mon) + 1, int(day))
+    except (TypeError, ValueError):
+        return None
+    w = re.search(r"\b(%s)[a-z]*" % "|".join(WEEKDAYS), low)
+    return d, WEEKDAYS.index(w.group(1)) if w else None
+
+
+def extract(text, cfg, year):
+    """The text of a book of abstracts -> (records, summary line). One record per entry: title, abstract, day, the named groups of the patterns carried
+    forward (a new day clears the block, a new block clears the session; start and end become 'YYYY-MM-DD HH:MM') and page when cfg has page_offset."""
+    heads, word = cfg.get("headings") or {}, r"[^\W\d_]+(?:-[^\W\d_]+)*"
+    kinds, marker = [(k, re.compile(heads[k])) for k in ("day", "block", "session") if k in heads], re.compile(cfg["entry"]["marker"])
+    lines, page = [], 1
+    for raw in text.split("\n"):
+        page += raw.count("\f")  # pdftotext starts every page with a form feed
+        lines.append((raw.strip(), page))
+    pat = lambda k: re.compile(cfg[k]) if cfg.get(k) else None
+    start, stop, drops = pat("start_after"), pat("end_before"), [re.compile(d) for d in cfg.get("drop") or []]
+    lo = next((i for i, (s, _) in enumerate(lines) if start and start.search(s)), 0)
+    hi = next((i for i in range(lo, len(lines)) if stop and stop.search(lines[i][0])), len(lines))
+    body = [(None if s and any(d.search(s) for d in drops) else s, p) for s, p in lines[lo:hi]]  # None: a dropped line (a footer), the page seam
+
+    def kind(s):
+        for k, r in kinds:
+            m = r.search(s)
+            if m:
+                return k, m
+
+    st, items, i = collections.Counter(), [], 0  # items: None for a blank line, False for a dropped one, else ("text", line, page), ("head", kind, match, line, page) or ("mark", line, match, page)
+    while i < len(body):
+        s, pg = body[i]
+        if s is None:
+            items.append(False); i += 1
+            continue
+        h = kind(s) if s else None
+        if s and not h and not marker.search(s) and i + 1 < len(body):  # a heading wrapped over two lines: joined only when the joined text is a heading and neither line is one alone
+            t = body[i + 1][0]
+            h = kind(s + " " + t) if t and not kind(t) and not marker.search(t) else None
+            if h:
+                s, i, st["joins"] = s + " " + t, i + 1, st["joins"] + 1
+        i += 1
+        mk = marker.search(s) if s and not h else None
+        items.append(("head", h[0], h[1], s, pg) if h else ("mark", s, mk, pg) if mk else ("text", s, pg) if s else None)
+
+    toks = {w for s, _ in body if s for w in re.findall(word, s.lower())}  # the words the document itself spells without a line break
+
+    def joined(parts):
+        """Lines -> text. A line that ends in a hyphen before a lowercase word is joined to it; the hyphen stays only if the document spells the hyphenated form elsewhere and the joined form nowhere."""
+        out = ""
+        for s in parts:
+            left, right = re.search("(%s)-$" % word, out) if out.endswith("-") else None, re.match(word, s)
+            if left and right and s[:1].islower():
+                keep = (left[1] + "-" + right[0]).lower() in toks and (left[1] + right[0]).lower() not in toks
+                st["kept" if keep else "unhyphenated"] += 1
+                out = out + s if keep else out[:-1] + s
+            else:
+                out = (out + " " if out else "") + s
+        return out
+
+    def day_of(s):
+        got = parse_day(s, year)
+        return (cfg.get("day_overrides") or {}).get(s) or (got[0].isoformat() if got else "")
+
+    cur, ents = {"day": "", "block": {}, "session": {}}, []
+    for n, it in enumerate(items):
+        if it and it[0] == "head":
+            _, k, m, s, _ = it
+            st["head_" + k] += 1
+            g = {name: (v or "").strip() for name, v in m.groupdict().items()}
+            cur = {"day": day_of(s), "block": {}, "session": {}} if k == "day" else dict(cur, block=g, session={}) if k == "block" else dict(cur, session=g)
+        elif it and it[0] == "mark":
+            k = n
+            while k and not items[k - 1]:
+                k -= 1
+            top = k if False in items[k:n] else n  # a page break between the title and its marker (the marker starts the page): the title is above it
+            while top and items[top - 1] and items[top - 1][0] == "text":  # the title: the lines right above, up to a blank line or a heading
+                top -= 1
+            title = [x for x in items[top:n] if x]
+            ents.append(dict(at=n, top=top, title=[x[1] for x in title], page=title[0][-1] if title else it[3], groups={k: (v or "").strip() for k, v in it[2].groupdict().items()}, state=cur))
+    columns = {name for _, r in kinds + [("entry", marker)] for name in r.groupindex}
+    recs = []
+    for e, nxt in zip(ents, ents[1:] + [None]):
+        rec = dict.fromkeys(columns, "")
+        for g in (e["groups"], e["state"]["block"], e["state"]["session"]):
+            rec.update(g)
+        day = e["state"]["day"]
+        for k in ("start", "end"):
+            hm = re.fullmatch(r"(\d{1,2}):(\d\d)", rec.get(k, ""))
+            if hm and day:
+                rec[k] = "%s %02d:%s" % (day, int(hm[1]), hm[2])
+        below = [x[1] for x in items[e["at"] + 1:nxt["top"] if nxt else len(items)] if x and x[0] == "text"]  # up to the next entry's title
+        rec.update(title=joined(e["title"]), abstract=joined(below), day=day)
+        if "page_offset" in cfg:
+            rec["page"] = str(e["page"] + cfg["page_offset"])
+        recs.append(rec)
+    return recs, "text: %d entries%s; headings: %s; wrapped headings joined %d; line-end hyphens joined %d, kept %d" % (
+        len(recs), " (%d with a session)" % sum(bool(r.get("session")) for r in recs) if "session" in heads else "",
+        ", ".join("%s %d" % (k, st["head_" + k]) for k, _ in kinds), st["joins"], st["unhyphenated"], st["kept"])
 
 
 def unescape(s):
@@ -133,12 +257,12 @@ def convert(recs, m):
             fail("unknown time zone %r" % z)
     cell = lambda r, c: "" if r.get(c) is None else r[c] if isinstance(r[c], (list, dict)) else str(r[c])
     out, errs = [], collections.defaultdict(list)
-    for r in recs:
+    for n, r in enumerate(recs, 1):
         typ = unescape(cell(r, f["type"])) if "type" in f else ""
         if m.get("keep_types") and typ not in m["keep_types"]:
             continue
         spec = f["id"]
-        raw_id = cell(r, spec["column"] if isinstance(spec, dict) else spec)
+        raw_id = str(n) if isinstance(spec, dict) and spec.get("sequence") else cell(r, spec["column"] if isinstance(spec, dict) else spec)
         if isinstance(spec, dict) and spec.get("regex"):
             hit = re.search(spec["regex"], raw_id)
             raw_id = hit.group(1) if hit else ""
@@ -153,7 +277,7 @@ def convert(recs, m):
                 p["authors"] = split_authors(unescape(cell(r, au["column"])), au.get("sep", ", "))
         else:
             p["authors"] = []
-        for k in ("url", "session", "hall", "city"):
+        for k in ("url", "session", "hall", "city", "page"):
             if k in f and unescape(cell(r, f[k])):
                 p[k] = unescape(cell(r, f[k]))
         if typ:
@@ -240,9 +364,13 @@ def do_import(path, mapfile, out_dir):
         sys.exit("the mapping needs fields.id and fields.title")
     if not meta_in.get("name") or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", meta_in.get("slug", "")):
         sys.exit("the mapping needs meta.name and meta.slug (lowercase letters, digits, - _ . only: it is the folder name)")
-    fmt, recs, _ = load_records(path, m.get("records"))
+    if m.get("text"):  # a book of abstracts: its entries are the records
+        recs, summary = extract(read_text(path), m["text"], m["text"].get("year") or meta_in.get("year"))
+    else:
+        fmt, recs, _ = load_records(path, m.get("records"))
+        summary = None
     cols = {k for r in recs for k in r}
-    used = [v["column"] if isinstance(v, dict) else v for v in m["fields"].values()] + ([m["authors"]["column"]] if m.get("authors") else [])
+    used = [v if isinstance(v, str) else v["column"] for v in m["fields"].values() if isinstance(v, str) or "column" in v] + ([m["authors"]["column"]] if m.get("authors") else [])
     if [c for c in used if c not in cols]:
         sys.exit("unknown column in the mapping: %s; the file has: %s" % (", ".join(repr(c) for c in used if c not in cols), ", ".join(sorted(cols))))
     keep, warns = check(path, recs, m)
@@ -263,10 +391,10 @@ def do_import(path, mapfile, out_dir):
         json.dump(meta, f, ensure_ascii=False, indent=1)
     with open(os.path.join(out_dir, "institutions.json"), "w", encoding="utf-8") as f:
         json.dump({"patterns": patterns, "raw": table}, f, ensure_ascii=False, separators=(",", ":"))
-    report(keep, meta, warns, out_dir)
+    report(keep, meta, warns, out_dir, summary)
 
 
-def report(keep, meta, warns, out_dir):
+def report(keep, meta, warns, out_dir, summary=None):
     n, types = len(keep), meta.get("paper_types")
     base = [p for p in keep if not types or p.get("type") in types]
     slots = [a for p in keep for a in p["authors"]]
@@ -277,6 +405,8 @@ def report(keep, meta, warns, out_dir):
         100 * sum(bool(p["abstract"]) for p in base) // max(len(base), 1), len(base), 100 * sum(bool(a[1]) for a in slots) // max(len(slots), 1), len(slots)))
     print("schedule: " + ("none (no start times: picks are ranked without session times, no calendar)" if not timed else
                           "%d records with times, %s to %s" % (len(timed), timed[0], timed[-1])))
+    if summary:
+        print(summary)
     for w in warns:
         print("warning: " + w)
     for k, i in enumerate(sorted({0, n // 2, n - 1}), 1):
