@@ -129,6 +129,7 @@ def find(a):
     papers = load()
     by_id = {p["id"]: i for i, p in enumerate(papers) if p["id"]}
     vec, vecs, post = build(papers)
+    k = a.k or min(150, max(40, sum(map(wanted, papers)) // 5))  # a fifth of the papers, 40 to 150 (NeurIPS: 150)
     queries, own = [], set()
     for s in a.paper or []:
         i = by_id.get(paper_id(s))
@@ -151,7 +152,7 @@ def find(a):
             for i, dw in post[t]:
                 score[i] += qw * dw / len(queries)
     ban = {name_key(n) for n in a.exclude_name or []}  # drop papers by the user (profile mode has no paper ids to exclude)
-    top = sorted((i for i in score if i not in own and not any(name_key(n) in ban for n, _ in papers[i]["authors"])), key=lambda i: -score[i])[: a.k]
+    top = sorted((i for i in score if i not in own and not any(name_key(n) in ban for n, _ in papers[i]["authors"])), key=lambda i: -score[i])[:k]
     print("rank\tid\tscore\twhere\ttitle\tmatched terms")
     for r, i in enumerate(top, 1):
         shared = sorted(set().union(*(q.keys() for q in queries)) & vecs[i].keys(),
@@ -175,7 +176,8 @@ def show(a):
             print(f"### {s}: not found\n"); continue
         who = "; ".join(f"{n} ({af})" if af else n for n, af in p["authors"][:8]) + (" ..." if len(p["authors"]) > 8 else "")
         ab = "" if a.no_abstract else cut(p["abstract"], a.chars) + "\n"
-        print(f"### {p['id']} | {p['title']}\nauthors: {who}\nwhere: {place(p)} | {link(p)}\n{ab}")
+        pointer = " | ".join(x for x in (link(p), f"book page {p['page']}" if p.get("page") else "") if x)  # a book of abstracts has pages, not links
+        print(f"### {p['id']} | {p['title']}\nauthors: {who}\nwhere: {place(p)} | {pointer}\n{ab}")
 
 
 def fold(s):
@@ -353,7 +355,7 @@ if __name__ == "__main__":
     f.add_argument("--text"); f.add_argument("--text-file", action="append", help="repeatable; each file is one query")
     f.add_argument("--profile", help="works saved by the profile command"); f.add_argument("--use", help="work numbers from the profile list, e.g. 1,4,7")
     f.add_argument("--exclude-name", action="append", help="drop papers by this author (the user), repeatable")
-    f.add_argument("-k", type=int, default=150, help="pool size (default 150)")
+    f.add_argument("-k", type=int, help="pool size (default: a fifth of the dataset, between 40 and 150)")
     s = sub.add_parser("show"); s.set_defaults(fn=show); s.add_argument("--data", help=DATA_HELP)
     s.add_argument("ids", help="comma-separated paper ids"); s.add_argument("--chars", type=int, help="truncate abstracts"); s.add_argument("--no-abstract", action="store_true", help="title, authors, where only")
     w = sub.add_parser("who"); w.set_defaults(fn=who); w.add_argument("--data", help=DATA_HELP)
