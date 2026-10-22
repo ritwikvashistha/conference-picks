@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Turn a conference's paper list (CSV, JSON or JSONL, optionally .gz) or the text of its book of abstracts into a dataset folder for search.py. Python 3 standard library only.
 
-  import_dataset.py inspect FILE                                   # format, rows, columns with sample values
+  import_dataset.py inspect FILE                                   # format, rows, columns with sample values (a .txt or .pdf book: its structure)
   import_dataset.py import FILE --mapping map.json [--out DIR]     # check, convert, write papers.json.gz, meta.json, institutions.json
 
 The mapping (JSON) says which column holds what. The script checks it and writes nothing if the data is not good enough:
@@ -15,7 +15,8 @@ The mapping (JSON) says which column holds what. The script checks it and writes
 Times with an offset (ISO, the default) are converted to the zone of their site. Default output: $CONFERENCE_PICKS_HOME or ~/.conference-picks, then the slug.
 {"id": {"sequence": true}} numbers the records 1, 2, ... in file order.
 
-A book of abstracts (the text from `pdftotext -layout`, one column) takes a "text" block; its entries become the records, and the mapping names their columns:
+A book of abstracts takes a "text" block; give FILE as the .txt from `pdftotext -layout book.pdf book.txt` (poppler), or as the .pdf itself when pdftotext is on PATH.
+Its entries become the records, and the mapping names their columns:
   "text": {"year": 2026, "start_after": "^Sunday 28 June$",         # the body starts at the first line that matches; "end_before" ends it (the index at the back)
            "drop": ["^Programme\\s+Index$", "^\\d{1,3}$"],          # footer and page-number lines
            "headings": {"day": "^...$", "block": "^(?P<block>.+): (?P<start>\\d+:\\d\\d)-(?P<end>\\d+:\\d\\d)$", "session": "^(?P<session>.+) \\((?P<room>.+)\\)$"},
@@ -24,9 +25,10 @@ A book of abstracts (the text from `pdftotext -layout`, one column) takes a "tex
            "expect_sessions": 70}                                     # optional: warn if the body has another number of session headings
 Every named group becomes a column, next to title, abstract and day (and page when "page_offset" is set: book page = PDF page + offset); headings carry forward.
 """
-import argparse, collections, csv, datetime as dt, gzip, hashlib, html, json, os, re, sys, unicodedata
+import argparse, collections, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, unicodedata
 from zoneinfo import ZoneInfo
 
+TEXT_FILES = (".txt", ".pdf")
 MONTHS, WEEKDAYS = "jan feb mar apr may jun jul aug sep oct nov dec".split(), "mon tue wed thu fri sat sun".split()
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHIPPED = os.path.join(HERE, "..", "data", "institutions.json")  # its curated patterns also drive the table written for the new dataset
@@ -60,6 +62,8 @@ def load_records(path, key=None):
 
 
 def inspect(path):
+    if os.path.splitext(path)[1].lower() in TEXT_FILES:
+        return inspect_text(path, read_text(path))
     fmt, recs, key = load_records(path)
     cols = list(dict.fromkeys(k for r in recs for k in r))
     lines = ["file: %s  format: %s  rows: %d" % (os.path.basename(path), fmt, len(recs))] + (["records: " + key] if key else [])
@@ -75,12 +79,59 @@ def inspect(path):
                 break
         lines.append("  %s  %d%%  %s" % (c, 100 * len(vals) // max(len(recs), 1), " | ".join(samples)))
     out = "\n".join(lines + (["  ... %d more columns" % (len(cols) - 30)] if len(cols) > 30 else []))
+    emit(out)
+
+
+def emit(out):
     print(out if len(out) <= 3000 else out[:2950] + "\n... (cut)")
 
 
 def read_text(path):
+    """The text of a book: a .txt as it is; a .pdf through `pdftotext -layout` when that is on PATH, else the command for the user to run."""
+    if path.lower().endswith(".pdf"):
+        exe = shutil.which("pdftotext")
+        if not exe:
+            sys.exit('pdftotext (poppler) is not on PATH, so this PDF cannot be read here. Do not install anything: ask the user to run\n  pdftotext -layout "%s" "%s"\nand to give you the .txt file.' % (path, os.path.splitext(path)[0] + ".txt"))
+        r = subprocess.run([exe, "-layout", path, "-"], capture_output=True)
+        if r.returncode:
+            sys.exit("pdftotext failed: " + r.stderr.decode("utf-8", "replace").strip()[:300])
+        return r.stdout.decode("utf-8", errors="replace")
     with open(path, encoding="utf-8", errors="replace") as f:
         return f.read()
+
+
+def inspect_text(path, text):
+    """What an agent needs to write the text patterns without reading the book: counts, the lines around the first entry, and one line per shape of day and time heading."""
+    lines = [x.strip() for x in text.split("\n")]
+    show = lambda n: "L%d  %s" % (n + 1, lines[n][:90])
+    labels = collections.Counter(m[1] for x in lines for m in [re.match(r"([A-Z][A-Za-z ]{2,24}):\s*\S", x)] if m)
+    top = [(k, c) for k, c in labels.most_common(4) if c >= 5]
+    out = ["file: %s  format: text  lines: %d  pages: %d  characters: %d" % (os.path.basename(path), len(lines), text.rstrip().count("\f") + 1, len(text)),
+           "marker candidates (label: lines): " + (", ".join("%s: %d" % t for t in top) or "none with 5 or more lines")]
+    first = last = 0
+    if top:
+        at = [i for i, x in enumerate(lines) if x.startswith(top[0][0] + ":")]
+        first, last = at[0], at[-1]
+        out += ["around the first %s line:" % top[0][0]] + [show(i) for i in range(max(first - 10, 0), min(first + 4, len(lines)))]
+    seen, heads = set(), []
+    for n, x in enumerate(lines[:last or len(lines)]):  # not the index at the back
+        if 3 < len(x) <= 60 and ". ." not in x and (parse_day(x, 2000) or re.search(r"\d{1,2}[:.]\d\d\s*[–—-]\s*\d{1,2}[:.]\d\d", x)):
+            shape = re.sub(r"[A-Za-z]+", "a", re.sub(r"\d+", "9", x))
+            if shape not in seen:
+                seen.add(shape); heads.append(show(n))
+    out += ["day and time lines, one per shape:"] + heads[:6]
+    ends = {}
+    for n, x in enumerate(lines):
+        m = re.search(r"\(([^()]{1,25})\)$", x)
+        if m and len(x) <= 140:
+            ends.setdefault(m[0], [n, 0])[1] += 1
+    ends = sorted(((k, v) for k, v in ends.items() if v[1] >= 3), key=lambda kv: -kv[1][1])[:5]
+    if ends:
+        out.append("lines ending in (...): " + ", ".join("%s %dx first L%d" % (k, v[1], v[0] + 1) for k, v in ends))
+    rep = [(" ".join(k.split())[:50], c) for k, c in collections.Counter(" ".join(x.split()) for x in lines if x).most_common(4) if c >= 5]
+    if rep:
+        out.append("repeated lines (footers?): " + ", ".join("%dx %s" % (c, k) for k, c in rep))
+    emit("\n".join(out))
 
 
 def parse_day(s, year):
@@ -416,9 +467,9 @@ def do_import(path, mapfile, out_dir):
         sys.exit("the mapping needs fields.id and fields.title")
     if not meta_in.get("name") or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", meta_in.get("slug", "")):
         sys.exit("the mapping needs meta.name and meta.slug (lowercase letters, digits, - _ . only: it is the folder name)")
-    if bool(m.get("text")) != (os.path.splitext(path)[1].lower() == ".txt"):
-        fail('the mapping has a "text" block but %s is not a .txt file (the text of the book, from `pdftotext -layout`)' % os.path.basename(path) if m.get("text") else
-             '%s is a text file, so the mapping needs a "text" block (see TEXT_PROGRAMS.md)' % os.path.basename(path))
+    if bool(m.get("text")) != (os.path.splitext(path)[1].lower() in TEXT_FILES):
+        fail('the mapping has a "text" block but %s is not a .txt or .pdf file' % os.path.basename(path) if m.get("text") else
+             '%s is a book (.txt or .pdf), so the mapping needs a "text" block (see TEXT_PROGRAMS.md)' % os.path.basename(path))
     found = ((), ())
     if m.get("text"):  # a book of abstracts: its entries are the records
         recs, errs, warns, summary = extract(read_text(path), m["text"], m["text"].get("year") or meta_in.get("year"))
