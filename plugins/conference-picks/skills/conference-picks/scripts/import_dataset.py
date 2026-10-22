@@ -20,7 +20,8 @@ A book of abstracts (the text from `pdftotext -layout`, one column) takes a "tex
            "drop": ["^Programme\\s+Index$", "^\\d{1,3}$"],          # footer and page-number lines
            "headings": {"day": "^...$", "block": "^(?P<block>.+): (?P<start>\\d+:\\d\\d)-(?P<end>\\d+:\\d\\d)$", "session": "^(?P<session>.+) \\((?P<room>.+)\\)$"},
            "entry": {"marker": "^Presenter: (?P<presenter>.+)$"},     # one line per entry: the lines above it are the title, the lines below it the abstract
-           "day_overrides": {"Monday 30 June": "2026-06-29"}}         # a day heading whose date or weekday the book prints wrongly
+           "day_overrides": {"Monday 30 June": "2026-06-29"},          # a day heading whose date or weekday the book prints wrongly
+           "expect_sessions": 70}                                     # optional: warn if the body has another number of session headings
 Every named group becomes a column, next to title, abstract and day (and page when "page_offset" is set: book page = PDF page + offset); headings carry forward.
 """
 import argparse, collections, csv, datetime as dt, gzip, hashlib, html, json, os, re, sys, unicodedata
@@ -30,6 +31,7 @@ MONTHS, WEEKDAYS = "jan feb mar apr may jun jul aug sep oct nov dec".split(), "m
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHIPPED = os.path.join(HERE, "..", "data", "institutions.json")  # its curated patterns also drive the table written for the new dataset
 MIN_RECORDS, MAX_NO_TITLE, MIN_ABSTRACTS, WARN_ABSTRACTS, MAX_DUP, MAX_SPAN_DAYS = 50, 0.05, 0.5, 0.8, 0.005, 21
+TEXT_NO_TITLE, TEXT_NO_DAY, TEXT_WORDS, TEXT_WORDS_SHARE, TEXT_REPEATS = 0.01, 0.02, 20, 0.9, 20  # text entries: the share of entries without title or day that is refused, abstracts of at least 20 words that is expected, a line repeated this often
 
 
 def fail(*msgs):
@@ -98,18 +100,33 @@ def parse_day(s, year):
 
 
 def extract(text, cfg, year):
-    """The text of a book of abstracts -> (records, summary line). One record per entry: title, abstract, day, the named groups of the patterns carried
+    """The text of a book of abstracts -> (records, errors, warnings, summary line). One record per entry: title, abstract, day, the named groups of the patterns carried
     forward (a new day clears the block, a new block clears the session; start and end become 'YYYY-MM-DD HH:MM') and page when cfg has page_offset."""
-    heads, word = cfg.get("headings") or {}, r"[^\W\d_]+(?:-[^\W\d_]+)*"
-    kinds, marker = [(k, re.compile(heads[k])) for k in ("day", "block", "session") if k in heads], re.compile(cfg["entry"]["marker"])
+    heads, entry, word, errors, warns = cfg.get("headings") or {}, cfg.get("entry") or {}, r"[^\W\d_]+(?:-[^\W\d_]+)*", [], []
+
+    def rx(name, pattern):
+        try:
+            return re.compile(pattern)
+        except (re.error, TypeError) as e:
+            errors.append("text.%s is not a regular expression: %s" % (name, e))
+
+    if not entry.get("marker"):
+        fail("the text mapping needs entry.marker: a regular expression for the one line that starts every entry")
+    kinds, marker = [(k, rx("headings." + k, heads[k])) for k in ("day", "block", "session") if k in heads], rx("entry.marker", entry["marker"])
+    start, stop = [rx(k, cfg[k]) if cfg.get(k) else None for k in ("start_after", "end_before")]
+    drops = [rx("drop[%d]" % j, d) for j, d in enumerate(cfg.get("drop") or [])]
+    if errors:
+        fail(*errors)
     lines, page = [], 1
     for raw in text.split("\n"):
         page += raw.count("\f")  # pdftotext starts every page with a form feed
         lines.append((raw.strip(), page))
-    pat = lambda k: re.compile(cfg[k]) if cfg.get(k) else None
-    start, stop, drops = pat("start_after"), pat("end_before"), [re.compile(d) for d in cfg.get("drop") or []]
-    lo = next((i for i, (s, _) in enumerate(lines) if start and start.search(s)), 0)
-    hi = next((i for i in range(lo, len(lines)) if stop and stop.search(lines[i][0])), len(lines))
+    lo = next((i for i, (s, _) in enumerate(lines) if start.search(s)), None) if start else 0
+    if lo is None:
+        fail("text.start_after matched no line")
+    hi = next((i for i in range(lo, len(lines)) if stop.search(lines[i][0])), None) if stop else len(lines)
+    if hi is None:
+        fail("text.end_before matched no line after the start")
     body = [(None if s and any(d.search(s) for d in drops) else s, p) for s, p in lines[lo:hi]]  # None: a dropped line (a footer), the page seam
 
     def kind(s):
@@ -134,6 +151,10 @@ def extract(text, cfg, year):
         mk = marker.search(s) if s and not h else None
         items.append(("head", h[0], h[1], s, pg) if h else ("mark", s, mk, pg) if mk else ("text", s, pg) if s else None)
 
+    seen = collections.Counter(it[1] for it in items if it and it[0] == "head")
+    gone = ["text.headings.%s matched no line" % k for k, _ in kinds if not seen[k]] + ([] if any(it and it[0] == "mark" for it in items) else ["text.entry.marker matched no line"])
+    if gone:
+        fail(*gone)
     toks = {w for s, _ in body if s for w in re.findall(word, s.lower())}  # the words the document itself spells without a line break
 
     def joined(parts):
@@ -149,17 +170,33 @@ def extract(text, cfg, year):
                 out = (out + " " if out else "") + s
         return out
 
-    def day_of(s):
-        got = parse_day(s, year)
-        return (cfg.get("day_overrides") or {}).get(s) or (got[0].isoformat() if got else "")
+    overrides, days = cfg.get("day_overrides") or {}, {}
 
-    cur, ents = {"day": "", "block": {}, "session": {}}, []
+    def day_of(s):
+        """A day heading -> 'YYYY-MM-DD' ('' if unreadable). A weekday that does not match its date is an error until day_overrides gives the real date."""
+        if s not in days:
+            d, got = None, parse_day(s, year)
+            if s in overrides:
+                try:
+                    d = dt.date.fromisoformat(overrides[s])
+                except ValueError:
+                    errors.append("text.day_overrides[%s] is not a date (use YYYY-MM-DD)" % json.dumps(s, ensure_ascii=False))
+            elif not got:
+                errors.append("cannot read a date from the day heading %s%s" % (json.dumps(s, ensure_ascii=False), "" if year else ": set text.year"))
+            else:
+                d = got[0]
+                if got[1] is not None and got[1] != d.weekday():
+                    errors.append("the day heading %s is %s, which is a %s: ask the user whether the date or the weekday is wrong, then give the real date in text.day_overrides, e.g. {%s: \"YYYY-MM-DD\"}" % (
+                        json.dumps(s, ensure_ascii=False), d, "Monday Tuesday Wednesday Thursday Friday Saturday Sunday".split()[d.weekday()], json.dumps(s, ensure_ascii=False)))
+            days[s] = d
+        return days[s].isoformat() if days[s] else ""
+
+    cur, ents = {"day": "", "block": None, "session": None}, []
     for n, it in enumerate(items):
         if it and it[0] == "head":
             _, k, m, s, _ = it
-            st["head_" + k] += 1
             g = {name: (v or "").strip() for name, v in m.groupdict().items()}
-            cur = {"day": day_of(s), "block": {}, "session": {}} if k == "day" else dict(cur, block=g, session={}) if k == "block" else dict(cur, session=g)
+            cur = {"day": day_of(s), "block": None, "session": None} if k == "day" else dict(cur, block=g, session=None) if k == "block" else dict(cur, session=g)
         elif it and it[0] == "mark":
             k = n
             while k and not items[k - 1]:
@@ -174,7 +211,7 @@ def extract(text, cfg, year):
     for e, nxt in zip(ents, ents[1:] + [None]):
         rec = dict.fromkeys(columns, "")
         for g in (e["groups"], e["state"]["block"], e["state"]["session"]):
-            rec.update(g)
+            rec.update(g or {})
         day = e["state"]["day"]
         for k in ("start", "end"):
             hm = re.fullmatch(r"(\d{1,2}):(\d\d)", rec.get(k, ""))
@@ -185,9 +222,24 @@ def extract(text, cfg, year):
         if "page_offset" in cfg:
             rec["page"] = str(e["page"] + cfg["page_offset"])
         recs.append(rec)
-    return recs, "text: %d entries%s; headings: %s; wrapped headings joined %d; line-end hyphens joined %d, kept %d" % (
-        len(recs), " (%d with a session)" % sum(bool(r.get("session")) for r in recs) if "session" in heads else "",
-        ", ".join("%s %d" % (k, st["head_" + k]) for k, _ in kinds), st["joins"], st["unhyphenated"], st["kept"])
+    n, untitled, wordy = len(recs), sum(not r["title"] for r in recs), sum(len(r["abstract"].split()) >= TEXT_WORDS for r in recs)
+    if untitled / n > TEXT_NO_TITLE:
+        errors.append("%d of %d entries have no title (over %d%%): the title is the lines right above entry.marker, set off from the abstract before it by a blank line" % (untitled, n, TEXT_NO_TITLE * 100))
+    for k in ("day", "block"):
+        miss = sum(e["state"][k] in ("", None) for e in ents)
+        if k in heads and miss / n > TEXT_NO_DAY:
+            errors.append("%d of %d entries have no %s (over %d%%): headings.%s must match every %s heading, and the body must start at or before the first" % (miss, n, k, TEXT_NO_DAY * 100, k, k))
+    if wordy / n < TEXT_WORDS_SHARE:
+        warns.append("abstracts of %d words or more on only %d%% of the entries (under %d%%)" % (TEXT_WORDS, 100 * wordy // n, TEXT_WORDS_SHARE * 100))
+    if [d for d in days.values() if d] != sorted(d for d in days.values() if d):
+        warns.append("the day headings are not in date order: check them (and day_overrides)")
+    warns += ["day_overrides has no heading %r" % k for k in overrides if k not in days]
+    if cfg.get("expect_sessions") is not None and cfg["expect_sessions"] != seen["session"]:
+        warns.append("expected %s session headings, found %d" % (cfg["expect_sessions"], seen["session"]))
+    warns += ["line repeated %d times: %r (a footer? add it to text.drop)" % (c, t[:60]) for t, c in collections.Counter(" ".join(s.split()) for s, _ in body if s).most_common(3) if c >= TEXT_REPEATS]
+    return recs, errors, warns, "text: %d entries%s; headings: %s; wrapped headings joined %d; line-end hyphens joined %d, kept %d" % (
+        n, " (%d with a session)" % sum(bool(r.get("session")) for r in recs) if "session" in heads else "",
+        ", ".join("%s %d" % (k, seen[k]) for k, _ in kinds), st["joins"], st["unhyphenated"], st["kept"])
 
 
 def unescape(s):
@@ -302,10 +354,10 @@ def convert(recs, m):
     return out, errs
 
 
-def check(path, recs, m):
-    """-> (records without repeated ids, warnings); exits with every problem found if the data is not good enough."""
+def check(path, recs, m, found=((), ())):
+    """-> (records without repeated ids, warnings); exits with every problem found if the data is not good enough. found: errors and warnings the text extractor already has."""
     out, errs = convert(recs, m)
-    errors, warns, n = [], [], len(out)
+    errors, warns, n = list(found[0]), list(found[1]), len(out)
     if errs["zone"]:
         errors.append("times need a time zone: set time.zone or time.zones in the mapping (no zone for site %s)" % ", ".join(sorted({repr(c) for c in errs["zone"]})))
     if errs["format"]:
@@ -364,8 +416,13 @@ def do_import(path, mapfile, out_dir):
         sys.exit("the mapping needs fields.id and fields.title")
     if not meta_in.get("name") or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", meta_in.get("slug", "")):
         sys.exit("the mapping needs meta.name and meta.slug (lowercase letters, digits, - _ . only: it is the folder name)")
+    if bool(m.get("text")) != (os.path.splitext(path)[1].lower() == ".txt"):
+        fail('the mapping has a "text" block but %s is not a .txt file (the text of the book, from `pdftotext -layout`)' % os.path.basename(path) if m.get("text") else
+             '%s is a text file, so the mapping needs a "text" block (see TEXT_PROGRAMS.md)' % os.path.basename(path))
+    found = ((), ())
     if m.get("text"):  # a book of abstracts: its entries are the records
-        recs, summary = extract(read_text(path), m["text"], m["text"].get("year") or meta_in.get("year"))
+        recs, errs, warns, summary = extract(read_text(path), m["text"], m["text"].get("year") or meta_in.get("year"))
+        found = (errs, warns)
     else:
         fmt, recs, _ = load_records(path, m.get("records"))
         summary = None
@@ -373,7 +430,7 @@ def do_import(path, mapfile, out_dir):
     used = [v if isinstance(v, str) else v["column"] for v in m["fields"].values() if isinstance(v, str) or "column" in v] + ([m["authors"]["column"]] if m.get("authors") else [])
     if [c for c in used if c not in cols]:
         sys.exit("unknown column in the mapping: %s; the file has: %s" % (", ".join(repr(c) for c in used if c not in cols), ", ".join(sorted(cols))))
-    keep, warns = check(path, recs, m)
+    keep, warns = check(path, recs, m, found)
     out_dir = out_dir or os.path.join(os.environ.get("CONFERENCE_PICKS_HOME") or os.path.expanduser("~/.conference-picks"), meta_in["slug"])
     today = dt.date.today().isoformat()
     meta = dict(meta_in, source=meta_in.get("source") or os.path.basename(path), snapshot_date=meta_in.get("snapshot_date") or today,
