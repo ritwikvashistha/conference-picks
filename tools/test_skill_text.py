@@ -8,11 +8,12 @@ import csv, difflib, os, re, subprocess, sys, tempfile, unittest
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SKILL = os.path.join(ROOT, "plugins", "conference-picks", "skills", "conference-picks")
-SKILL_MD, OTHER = os.path.join(SKILL, "SKILL.md"), os.path.join(SKILL, "OTHER_CONFERENCES.md")
+SKILL_MD, OTHER, TEXT = os.path.join(SKILL, "SKILL.md"), os.path.join(SKILL, "OTHER_CONFERENCES.md"), os.path.join(SKILL, "TEXT_PROGRAMS.md")
 BASELINE = "neurips-only-0.1.2:plugins/neurips-picks/skills/neurips-picks/SKILL.md"  # the shipped NeurIPS-only skill text
 POINTER = "For another conference, or a dataset the user supplies, read `OTHER_CONFERENCES.md` in this folder first: it overrides the NeurIPS-specific parts below."
 sys.path.insert(0, HERE)
 import test_importer as ti  # its CSV fixture has the columns of a NeurIPS/ICML/ICLR "Downloads" file
+import test_text_entries as tt  # its two synthetic programs are what the examples in TEXT_PROGRAMS.md are imported against
 
 
 def read(path):
@@ -60,14 +61,14 @@ class SkillText(unittest.TestCase):
             self.assertIn(phrase, text)
 
     def test_every_script_command_in_it_exists_with_the_options_it_uses(self):
-        text = read(OTHER)
-        found = re.findall(r"scripts/(search|import_dataset)\.py (\w+)([^\n`]*)", text)
-        self.assertGreaterEqual(len(found), 4)
-        for script, sub, rest in found:
-            r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", script + ".py"), sub, "-h"], capture_output=True, text=True)
-            self.assertEqual(r.returncode, 0, "%s %s: %s" % (script, sub, r.stderr))
-            for option in re.findall(r"(?<![\w-])(--[a-z][a-z-]*)", rest):
-                self.assertIn(option, r.stdout, "%s %s has no %s" % (script, sub, option))
+        for doc, least in ((OTHER, 4), (TEXT, 2)):
+            found = re.findall(r"scripts/(search|import_dataset)\.py (\w+)([^\n`]*)", read(doc))
+            self.assertGreaterEqual(len(found), least, doc)
+            for script, sub, rest in found:
+                r = subprocess.run([sys.executable, os.path.join(SKILL, "scripts", script + ".py"), sub, "-h"], capture_output=True, text=True)
+                self.assertEqual(r.returncode, 0, "%s %s: %s" % (script, sub, r.stderr))
+                for option in re.findall(r"(?<![\w-])(--[a-z][a-z-]*)", rest):
+                    self.assertIn(option, r.stdout, "%s %s has no %s" % (script, sub, option))
 
     def test_the_example_mapping_imports_a_template_csv(self):
         block = re.search(r"```json\n(.*?)\n```", read(OTHER), re.S)
@@ -83,6 +84,33 @@ class SkillText(unittest.TestCase):
             r = ti.sh(ti.IMPORTER, "import", src, "--mapping", os.path.join(d, "map.json"), "--out", out)
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("records: 63", r.stdout)
+
+    def test_the_text_programs_file_exists_stays_short_and_keeps_the_book_out_of_the_chat(self):
+        self.assertTrue(os.path.isfile(TEXT), "TEXT_PROGRAMS.md is missing")
+        self.assertLessEqual(len(read(TEXT).splitlines()), 45)
+        text = read(TEXT).lower()
+        for phrase in ("by path", "never read", "pdftotext -layout", "never install", "inspect", "day_overrides", "write no parsing script"):
+            self.assertIn(phrase, text)
+
+    def test_every_json_block_in_it_imports_a_synthetic_program(self):
+        blocks = re.findall(r"```json\n(.*?)\n```", read(TEXT), re.S)
+        self.assertGreaterEqual(len(blocks), 2, "one example per layout")
+        for block in blocks:
+            layout = "a" if "Presenter" in block else "b"
+            with tempfile.TemporaryDirectory() as d:
+                with open(os.path.join(d, "book.txt"), "w", encoding="utf-8", newline="\n") as f:
+                    f.write(tt.Program(layout).text)
+                with open(os.path.join(d, "map.json"), "w", encoding="utf-8") as f:
+                    f.write(block)
+                r = ti.sh(ti.IMPORTER, "import", os.path.join(d, "book.txt"), "--mapping", os.path.join(d, "map.json"), "--out", os.path.join(d, "out"))
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertIn("text: 60 entries", r.stdout)
+
+    def test_the_pointer_in_other_conferences_and_the_readme_cover_pdf_programs(self):
+        self.assertIn("TEXT_PROGRAMS.md", read(OTHER))
+        readme = read(os.path.join(ROOT, "README.md"))
+        for phrase in ("pdftotext", "TEXT_PROGRAMS.md", "estimate"):
+            self.assertIn(phrase, readme)
 
     def test_data_notice_says_other_conferences_stay_on_the_users_machine(self):
         self.assertIn("~/.conference-picks", read(os.path.join(SKILL, "DATA_NOTICE.md")))
