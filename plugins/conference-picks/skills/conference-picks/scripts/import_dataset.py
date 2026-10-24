@@ -23,7 +23,7 @@ Its entries become the records, and the mapping names their columns:
            "entry": {"marker": "^Presenter: (?P<presenter>.+)$"},     # one line per entry: the lines above it are the title, the lines below it the abstract
            "day_overrides": {"Monday 30 June": "2026-06-29"},          # a day heading whose date or weekday the book prints wrongly
            "expect_sessions": 70}                                     # optional: warn if the body has another number of session headings
-Every named group becomes a column, next to title, abstract and day (and page when "page_offset" is set: book page = PDF page + offset); headings carry forward.
+Every named group becomes a column, next to title, abstract and day (and page when "page_offset" is set: book page = the PDF page of the marker line + offset); headings carry forward.
 """
 import argparse, collections, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, unicodedata
 from zoneinfo import ZoneInfo
@@ -256,7 +256,7 @@ def extract(text, cfg, year):
             while top and items[top - 1] and items[top - 1][0] == "text":  # the title: the lines right above, up to a blank line or a heading
                 top -= 1
             title = [x for x in items[top:n] if x]
-            ents.append(dict(at=n, top=top, title=[x[1] for x in title], page=title[0][-1] if title else it[3], groups={k: (v or "").strip() for k, v in it[2].groupdict().items()}, state=cur))
+            ents.append(dict(at=n, top=top, title=[x[1] for x in title], page=it[3], groups={k: (v or "").strip() for k, v in it[2].groupdict().items()}, state=cur))
     columns = {name for _, r in kinds + [("entry", marker)] for name in r.groupindex}
     recs = []
     for e, nxt in zip(ents, ents[1:] + [None]):

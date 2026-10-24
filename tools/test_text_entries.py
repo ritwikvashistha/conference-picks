@@ -342,17 +342,18 @@ class TextEntries(unittest.TestCase):
         self.refused(self.do_import(self.a, mapping("a"), src=pdf, path=self.path("empty")), "pdftotext -layout", pdf, "book.txt")
         self.assertEqual(run(ti.IMPORTER, "inspect", pdf, path=self.path("empty")).returncode, 1)
 
-    def test_book_pages_come_from_the_page_breaks_and_show_prints_them(self):
+    def test_book_pages_are_the_pages_of_the_marker_lines_as_in_the_books_own_index_and_show_prints_them(self):
         m = mapping("a", page_offset=-1); m["fields"]["page"] = "page"
         self.imported(self.a, m)
-        lines, page, where = self.a.text.split("\n"), 1, {}
-        for x in lines:
+        page, marker_pages = 1, []
+        for x in self.a.text.split("\n"):
             page += x.count("\f")
-            where.setdefault(x.strip(), page)
-        first = lambda k: textwrap.wrap(title_of(k), 56, break_on_hyphens=False)[0]
-        for k in (0, 29, 59):
-            self.assertEqual(self.records()[k]["page"], str(where[first(k)] - 1))
-            self.assertIn("book page %d" % (where[first(k)] - 1), run(ti.ENGINE, "show", str(k + 1), "--data", self.out, "--no-abstract").stdout)
+            if x.strip().startswith("Presenter:"):
+                marker_pages.append(page - 1)
+        self.assertEqual(len(marker_pages), 60)
+        self.assertEqual([r["page"] for r in self.records()], [str(p) for p in marker_pages])  # also where the title ends the previous page
+        for k in (0, 59):
+            self.assertIn("book page %d" % marker_pages[k], run(ti.ENGINE, "show", str(k + 1), "--data", self.out, "--no-abstract").stdout)
         self.imported_again(mapping("a"))  # no page_offset: no pages
         self.assertNotIn("book page", run(ti.ENGINE, "show", "1", "--data", self.out + "2").stdout)
 
