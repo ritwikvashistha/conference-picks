@@ -3,7 +3,7 @@
 
 Run: python3 tools/test_skill_text.py
 """
-import csv, difflib, os, re, subprocess, sys, tempfile, unittest
+import csv, difflib, json, os, re, subprocess, sys, tempfile, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -91,7 +91,7 @@ class SkillText(unittest.TestCase):
         text = read(TEXT).lower()
         for phrase in ("by path", "never read", "pdftotext -layout", "never install", "inspect", "day_overrides", "write no parsing script",
                        "file-reading tool", "end_before", "exact room values", "the `text:` line",
-                       "after the last entry", "never guess", "never invent", "wait for the user"):
+                       "after the last entry", "never guess", "never invent", "wait for the user", "with and without the word", "never set 0", '"day_overrides": {'):
             self.assertIn(phrase, text)
         self.assertNotIn("last 30 lines", text)  # inspect shows the end of the body, nobody has to hunt for it
 
@@ -108,6 +108,16 @@ class SkillText(unittest.TestCase):
                 r = ti.sh(ti.IMPORTER, "import", os.path.join(d, "book.txt"), "--mapping", os.path.join(d, "map.json"), "--out", os.path.join(d, "out"))
                 self.assertEqual(r.returncode, 0, r.stderr)
                 self.assertIn("text: 60 entries", r.stdout)
+
+    def test_the_day_overrides_example_in_it_settles_a_weekday_error(self):
+        example = json.loads(re.search(r'"day_overrides": (\{[^}]*\})', read(TEXT)).group(1))
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "book.txt"), "w", encoding="utf-8", newline="\n") as f:
+                f.write(tt.Program("a", wrong_weekday=True).text)
+            with open(os.path.join(d, "map.json"), "w", encoding="utf-8") as f:
+                json.dump(tt.mapping("a", day_overrides=example), f)
+            r = ti.sh(ti.IMPORTER, "import", os.path.join(d, "book.txt"), "--mapping", os.path.join(d, "map.json"), "--out", os.path.join(d, "out"))
+            self.assertEqual(r.returncode, 0, r.stderr)
 
     def test_the_pointer_in_other_conferences_and_the_readme_cover_pdf_programs(self):
         self.assertIn("TEXT_PROGRAMS.md", read(OTHER))
