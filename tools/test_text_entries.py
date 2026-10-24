@@ -7,7 +7,7 @@ Two synthetic programs are built from code, in our own words, so nothing from a 
 
 Run: python3 tools/test_text_entries.py   (about a minute: each test runs the importer, some also run search.py)
 """
-import collections, csv, datetime, gzip, json, os, subprocess, sys, tempfile, textwrap, unittest
+import collections, csv, datetime, gzip, json, os, subprocess, sys, tempfile, textwrap, types, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -298,6 +298,13 @@ class TextEntries(unittest.TestCase):
         m = mapping("a"); m["text"]["drop"] = ["^\\d{1,3}$"]
         r = self.imported(self.a, m)
         self.assertRegex(r.stdout, r"warning: .*repeated.*Programme 2027")
+
+    def test_an_abstract_far_longer_than_the_rest_warns_that_the_index_at_the_back_may_be_in_the_body(self):
+        long_index = types.SimpleNamespace(text=self.a.text + "\n".join("Name%d, %d" % (k, k) for k in range(600)) + "\n")  # the index follows the last entry
+        m = mapping("a"); del m["text"]["end_before"]
+        r = self.imported(long_index, m)
+        self.assertRegex(r.stdout, r"warning: entry 60 has an abstract of \d{4} words.*median is \d+.*end_before")
+        self.assertNotIn("end_before", self.imported_again(mapping("a")).stdout)  # with end_before nothing is long
 
     def test_an_unexpected_session_count_is_a_warning_showing_both_numbers(self):
         r = self.imported(self.a, mapping("a", expect_sessions=12))

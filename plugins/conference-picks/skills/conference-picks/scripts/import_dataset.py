@@ -33,7 +33,7 @@ MONTHS, WEEKDAYS = "jan feb mar apr may jun jul aug sep oct nov dec".split(), "m
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHIPPED = os.path.join(HERE, "..", "data", "institutions.json")  # its curated patterns also drive the table written for the new dataset
 MIN_RECORDS, MAX_NO_TITLE, MIN_ABSTRACTS, WARN_ABSTRACTS, MAX_DUP, MAX_SPAN_DAYS = 50, 0.05, 0.5, 0.8, 0.005, 21
-TEXT_NO_TITLE, TEXT_NO_DAY, TEXT_WORDS, TEXT_WORDS_SHARE, TEXT_REPEATS = 0.01, 0.02, 20, 0.9, 20  # text entries: the share of entries without title or day that is refused, abstracts of at least 20 words that is expected, a line repeated this often
+TEXT_NO_TITLE, TEXT_NO_DAY, TEXT_WORDS, TEXT_WORDS_SHARE, TEXT_REPEATS, TEXT_LONG = 0.01, 0.02, 20, 0.9, 20, (1000, 5)  # text entries: the share of entries without title or day that is refused, abstracts of at least 20 words that is expected, a line repeated this often, an abstract this long (words, times the median) that looks like the index
 
 
 def fail(*msgs):
@@ -273,7 +273,8 @@ def extract(text, cfg, year):
         if "page_offset" in cfg:
             rec["page"] = str(e["page"] + cfg["page_offset"])
         recs.append(rec)
-    n, untitled, wordy = len(recs), sum(not r["title"] for r in recs), sum(len(r["abstract"].split()) >= TEXT_WORDS for r in recs)
+    words = [len(r["abstract"].split()) for r in recs]
+    n, untitled, wordy, median = len(recs), sum(not r["title"] for r in recs), sum(w >= TEXT_WORDS for w in words), sorted(words)[len(words) // 2]
     if untitled / n > TEXT_NO_TITLE:
         errors.append("%d of %d entries have no title (over %d%%): the title is the lines right above entry.marker, set off from the abstract before it by a blank line" % (untitled, n, TEXT_NO_TITLE * 100))
     for k in ("day", "block"):
@@ -282,6 +283,8 @@ def extract(text, cfg, year):
             errors.append("%d of %d entries have no %s (over %d%%): headings.%s must match every %s heading, and the body must start at or before the first" % (miss, n, k, TEXT_NO_DAY * 100, k, k))
     if wordy / n < TEXT_WORDS_SHARE:
         warns.append("abstracts of %d words or more on only %d%% of the entries (under %d%%)" % (TEXT_WORDS, 100 * wordy // n, TEXT_WORDS_SHARE * 100))
+    if max(words) > max(TEXT_LONG[0], TEXT_LONG[1] * median):
+        warns.append("entry %d has an abstract of %d words (the median is %d): is the index at the back of the book inside the body? Set text.end_before to its heading" % (words.index(max(words)) + 1, max(words), median))
     if [d for d in days.values() if d] != sorted(d for d in days.values() if d):
         warns.append("the day headings are not in date order: check them (and day_overrides)")
     warns += ["day_overrides has no heading %r" % k for k in overrides if k not in days]

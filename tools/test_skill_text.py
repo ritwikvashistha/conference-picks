@@ -89,7 +89,8 @@ class SkillText(unittest.TestCase):
         self.assertTrue(os.path.isfile(TEXT), "TEXT_PROGRAMS.md is missing")
         self.assertLessEqual(len(read(TEXT).splitlines()), 45)
         text = read(TEXT).lower()
-        for phrase in ("by path", "never read", "pdftotext -layout", "never install", "inspect", "day_overrides", "write no parsing script"):
+        for phrase in ("by path", "never read", "pdftotext -layout", "never install", "inspect", "day_overrides", "write no parsing script",
+                       "file-reading tool", "end_before", "exact room values", "the `text:` line"):
             self.assertIn(phrase, text)
 
     def test_every_json_block_in_it_imports_a_synthetic_program(self):
