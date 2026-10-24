@@ -223,6 +223,8 @@ class TextEntries(unittest.TestCase):
     def test_the_report_counts_entries_headings_and_joins(self):
         r = self.imported(self.a, mapping("a"))
         self.assertIn("text: 60 entries (30 with a session); headings: day 3, block 7, session 11; wrapped headings joined %d;" % self.a.joins, r.stdout)
+        with open(os.path.join(self.out, "meta.json"), encoding="utf-8") as f:
+            self.assertIn("cut out of the book's text by patterns", json.load(f)["notice"])
 
     def test_a_wrapped_room_and_a_room_on_its_own_line_are_joined_to_the_session_heading(self):
         self.imported(self.a, mapping("a"))

@@ -10,7 +10,7 @@ Read this instead of the NeurIPS-only parts of SKILL.md when the user is not ask
 `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py list` prints one dataset per line: slug, name, snapshot, link template, source, notice. If the conference is listed, use its slug. If not, you need a file (step 2). Do not search the web and do not download anything yourself.
 
 ## 2. Ask the user for the file
-Ask for the conference's paper list as CSV or JSON (title, authors, abstract; times are optional). Many conferences use the same site as NeurIPS: on its Downloads page (for example `icml.cc/Downloads/2026`) choose csv, keep every event type ticked and press Download Data. If the user has no file, say what is needed and stop.
+Ask for the conference's paper list as CSV or JSON (title, authors, abstract; times are optional). Many conferences use the same site as NeurIPS: on its Downloads page (for example `icml.cc/Downloads/2026`) choose csv, keep every event type ticked and press Download Data. If the program is only a PDF or text book of abstracts, read `TEXT_PROGRAMS.md` in this folder instead of steps 3-4. If the user has no file, say what is needed and stop.
 
 ## 3. Look at it, then write the mapping
 `python3 ${CLAUDE_SKILL_DIR}/scripts/import_dataset.py inspect <file>` lists the columns with samples. Write `mapping.json` in your scratch folder, here for a Downloads CSV:

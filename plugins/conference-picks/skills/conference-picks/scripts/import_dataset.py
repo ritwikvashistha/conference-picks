@@ -486,7 +486,8 @@ def do_import(path, mapfile, out_dir):
     today = dt.date.today().isoformat()
     meta = dict(meta_in, source=meta_in.get("source") or os.path.basename(path), snapshot_date=meta_in.get("snapshot_date") or today,
                 records=len(keep), imported_with="import_dataset.py")
-    meta.setdefault("notice", "Imported by you from %s on %s; check the official program." % (meta["source"], meta["snapshot_date"]))
+    meta.setdefault("notice", "Imported by you from %s on %s; %scheck the official program." % (
+        meta["source"], meta["snapshot_date"], "the entries were cut out of the book's text by patterns, so a few may be wrong: " if m.get("text") else ""))
     with open(path, "rb") as f:
         meta["source_sha256"] = hashlib.sha256(f.read()).hexdigest()
     tc = m.get("time") or {}
