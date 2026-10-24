@@ -101,7 +101,7 @@ def read_text(path):
 
 
 def inspect_text(path, text):
-    """What an agent needs to write the text patterns without reading the book: counts, the lines around the first entry, and one line per shape of day and time heading."""
+    """What an agent needs to write the text patterns without reading the book: counts, the lines around the first entry and after the last, and one line per shape of day and time heading."""
     lines = [x.strip() for x in text.split("\n")]
     show = lambda n: "L%d  %s" % (n + 1, lines[n][:90])
     labels = collections.Counter(m[1] for x in lines for m in [re.match(r"([A-Z][A-Za-z ]{2,24}):\s*\S", x)] if m)
@@ -113,6 +113,8 @@ def inspect_text(path, text):
         at = [i for i, x in enumerate(lines) if x.startswith(top[0][0] + ":")]
         first, last = at[0], at[-1]
         out += ["around the first %s line:" % top[0][0]] + [show(i) for i in range(max(first - 10, 0), min(first + 4, len(lines)))]
+        gap = next((i for i in range(last, len(lines) - 1) if not lines[i] and not lines[i + 1]), last)  # two blank lines: the last abstract has ended
+        out += ["after the last %s entry (where an index may start):" % top[0][0]] + [show(i) for i in [i for i in range(gap, len(lines)) if lines[i]][:10]]
     seen, heads = set(), []
     for n, x in enumerate(lines[:last or len(lines)]):  # not the index at the back
         if 3 < len(x) <= 60 and ". ." not in x and (parse_day(x, 2000) or re.search(r"\d{1,2}[:.]\d\d\s*[–—-]\s*\d{1,2}[:.]\d\d", x)):

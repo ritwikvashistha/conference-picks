@@ -90,8 +90,10 @@ class SkillText(unittest.TestCase):
         self.assertLessEqual(len(read(TEXT).splitlines()), 45)
         text = read(TEXT).lower()
         for phrase in ("by path", "never read", "pdftotext -layout", "never install", "inspect", "day_overrides", "write no parsing script",
-                       "file-reading tool", "end_before", "exact room values", "the `text:` line"):
+                       "file-reading tool", "end_before", "exact room values", "the `text:` line",
+                       "after the last entry", "never guess", "never invent", "wait for the user"):
             self.assertIn(phrase, text)
+        self.assertNotIn("last 30 lines", text)  # inspect shows the end of the body, nobody has to hunt for it
 
     def test_every_json_block_in_it_imports_a_synthetic_program(self):
         blocks = re.findall(r"```json\n(.*?)\n```", read(TEXT), re.S)

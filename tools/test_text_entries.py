@@ -325,6 +325,8 @@ class TextEntries(unittest.TestCase):
             first_marker = next(n for n, x in enumerate(lines, 1) if x.startswith(label.split(":")[0] + ":"))
             self.assertIn("L%d" % first_marker, r.stdout)
             self.assertIn("pages: %d" % (prog.text.count("\f") + 1), r.stdout)
+            self.assertIn("after the last", r.stdout)  # the lines after the last entry show where the index at the back starts
+            self.assertIn("Presenter Index" if "Presenter" in label else "Author Index", r.stdout)
 
     def test_a_pdf_goes_through_pdftotext_when_it_is_on_the_path(self):
         txt, args = self.write("book.txt", self.a.text), self.path("args.txt")
