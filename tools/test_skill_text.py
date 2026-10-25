@@ -122,8 +122,10 @@ class SkillText(unittest.TestCase):
     def test_the_pointer_in_other_conferences_and_the_readme_cover_pdf_programs(self):
         self.assertIn("TEXT_PROGRAMS.md", read(OTHER))
         readme = read(os.path.join(ROOT, "README.md"))
-        for phrase in ("pdftotext", "TEXT_PROGRAMS.md", "estimate"):
+        for phrase in ("pdftotext", "TEXT_PROGRAMS.md", "estimate", "$0.49", "$0.25", "$0.26"):  # the measured costs of the agent runs
             self.assertIn(phrase, readme)
+        for stale in ("No agent run has measured", "no agent has run this route yet"):
+            self.assertNotIn(stale, readme)
 
     def test_data_notice_says_other_conferences_stay_on_the_users_machine(self):
         self.assertIn("~/.conference-picks", read(os.path.join(SKILL, "DATA_NOTICE.md")))
