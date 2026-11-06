@@ -2,6 +2,7 @@
 """Parity test: the NeurIPS path of search.py must not change.
 
   python3 tools/parity.py record [--ref neurips-only-0.1.2]   run the frozen engine from git, store its output hashes for THIS Python
+  python3 tools/parity.py record --rebaseline-data            after a deliberate data refresh: the frozen engine on the NEW bundled data (run it under every Python)
   python3 tools/parity.py check [--engine PATH] [--data DIR]  run the engine of this tree and compare with the stored hashes
   python3 tools/parity.py convert DIR                         write the bundled data as a --data dataset folder (use with check --data)
 
@@ -78,20 +79,22 @@ def data_hashes(base=None):
     return {f: sha(open(os.path.join(base or os.path.join(SKILL, "data"), f), "rb").read()) for f in DATA_FILES}
 
 
-def record(ref):
+def record(ref, rebaseline=False):
     ref_files = {}
     for f in DATA_FILES:
         ref_files[f] = sha(subprocess.run(["git", "-C", ROOT, "show", "%s:%s/data/%s" % (ref, REF_DIR, f)], capture_output=True, check=True).stdout)
-    if ref_files != data_hashes():
-        sys.exit("the bundled data differs from %s: re-baselining would hide a data change" % ref)
+    if ref_files != data_hashes() and not rebaseline:
+        sys.exit("the bundled data differs from %s: re-baselining would hide a data change (after a deliberate refresh: record --rebaseline-data)" % ref)
     with tempfile.TemporaryDirectory() as tmp:
         os.makedirs(os.path.join(tmp, "scripts"))
         engine = os.path.join(tmp, "scripts", "search.py")
         open(engine, "wb").write(subprocess.run(["git", "-C", ROOT, "show", "%s:%s/scripts/search.py" % (ref, REF_DIR)], capture_output=True, check=True).stdout)
-        os.symlink(os.path.join(SKILL, "data"), os.path.join(tmp, "data"))  # same bytes as at the ref, checked above
+        os.symlink(os.path.join(SKILL, "data"), os.path.join(tmp, "data"))  # same bytes as at the ref, checked above, unless --rebaseline-data: then the new data on the frozen engine
         results = run_all(engine, [])
     m = json.load(open(MANIFEST)) if os.path.exists(MANIFEST) else {"python": {}}
-    m.update(ref=ref, data_sha256=ref_files)
+    if m.get("data_sha256") != data_hashes():
+        m["python"] = {}  # results recorded for other data (by other Pythons) are stale: record them again
+    m.update(ref=ref, data_sha256=data_hashes())
     m["python"][PY] = results
     json.dump(m, open(MANIFEST, "w"), indent=1, sort_keys=True)
     print("recorded %d cases for Python %s from %s" % (len(results), PY, ref))
@@ -130,8 +133,8 @@ def convert(dst):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("record"); r.add_argument("--ref", default="neurips-only-0.1.2")
+    r = sub.add_parser("record"); r.add_argument("--ref", default="neurips-only-0.1.2"); r.add_argument("--rebaseline-data", action="store_true", help="accept the changed bundled data (the engine stays the frozen one)")
     c = sub.add_parser("check"); c.add_argument("--engine", default=ENGINE); c.add_argument("--data")
     v = sub.add_parser("convert"); v.add_argument("dir")
     a = ap.parse_args()
-    {"record": lambda: record(a.ref), "check": lambda: check(a.engine, a.data), "convert": lambda: convert(a.dir)}[a.cmd]()
+    {"record": lambda: record(a.ref, a.rebaseline_data), "check": lambda: check(a.engine, a.data), "convert": lambda: convert(a.dir)}[a.cmd]()
