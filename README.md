@@ -2,7 +2,7 @@
 
 An agent skill that tells you which papers and authors at a conference are worth your time, given your own work. NeurIPS 2026 is built in; other conferences work from a paper list you bring (see [Other conferences](#other-conferences-experimental), experimental). For NeurIPS, give it your NeurIPS paper (id or link), your name, or an abstract, or, in the optional profile mode, your name, ORCID or a paper list so it can cover all your work. It returns a ranked list with a one-line reason for each pick, grouped by site (Sydney, Atlanta, Paris), session and local time, plus authors worth talking to. It can also write a calendar file and a spreadsheet of the picks.
 
-It runs on your own agent, with no accounts and no API keys. The search script uses only the Python standard library and a bundled snapshot of the NeurIPS 2026 program, taken 2026-10-17 to 2026-10-20, so sessions may have changed since: check neurips.cc for the official schedule.
+It runs on your own agent, with no accounts and no API keys. The search script uses only the Python standard library and a bundled snapshot of the NeurIPS 2026 program, taken on 2026-11-04 and 2026-11-05, so sessions may have changed since: check neurips.cc for the official schedule.
 
 ## Install
 
@@ -89,7 +89,7 @@ Google Scholar has no API and blocks automated access, so the agent will not try
 ## How it works
 
 1. The agent reads your abstract and writes a short keyword brief (other names for your ideas, neighbouring fields).
-2. `search.py` ranks all 9,105 posters with an abstract by word overlap with your abstract and the brief, and returns a pool of 150.
+2. `search.py` ranks all 9,145 posters with an abstract by word overlap with your abstract and the brief, and returns a pool of 150.
 3. The agent reads the promising candidates, picks 15 to 25, and explains each one in terms of your work.
 4. Output is grouped by site and session time, with times local to each site.
 

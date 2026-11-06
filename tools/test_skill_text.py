@@ -3,7 +3,7 @@
 
 Run: python3 tools/test_skill_text.py
 """
-import csv, difflib, json, os, re, subprocess, sys, tempfile, unittest
+import csv, difflib, gzip, json, os, re, subprocess, sys, tempfile, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -118,6 +118,18 @@ class SkillText(unittest.TestCase):
                 json.dump(tt.mapping("a", day_overrides=example), f)
             r = ti.sh(ti.IMPORTER, "import", os.path.join(d, "book.txt"), "--mapping", os.path.join(d, "map.json"), "--out", os.path.join(d, "out"))
             self.assertEqual(r.returncode, 0, r.stderr)
+
+    def test_the_counts_and_dates_the_notice_and_readme_state_are_those_of_the_bundled_data(self):
+        with gzip.open(os.path.join(SKILL, "data", "papers.json.gz"), "rt", encoding="utf-8") as f:
+            papers = json.load(f)
+        posters = [p for p in papers if p["type"] == "Poster"]
+        searchable = [p for p in posters if p.get("abstract") and p.get("id")]  # what search.py ranks
+        notice, readme = read(os.path.join(SKILL, "DATA_NOTICE.md")), read(os.path.join(ROOT, "README.md"))
+        self.assertIn("For each of the {:,} NeurIPS 2026 events ({:,} posters".format(len(papers), len(posters)), notice)
+        self.assertIn("ranks all {:,} posters with an abstract".format(len(searchable)), readme)
+        snapshot = re.search(r'"snapshot_date": "(\d{4}-\d\d-\d\d)"', read(os.path.join(SKILL, "scripts", "search.py"))).group(1)
+        self.assertIn(snapshot, notice)
+        self.assertIn(snapshot, readme)
 
     def test_the_pointer_in_other_conferences_and_the_readme_cover_pdf_programs(self):
         self.assertIn("TEXT_PROGRAMS.md", read(OTHER))

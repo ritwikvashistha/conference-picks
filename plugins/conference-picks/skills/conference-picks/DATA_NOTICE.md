@@ -4,7 +4,7 @@
 
 ## What is included
 
-For each of the 9,245 NeurIPS 2026 events (9,111 posters, plus workshops, tutorials and invited talks):
+For each of the 9,279 NeurIPS 2026 events (9,145 posters, plus workshops, tutorials and invited talks):
 
 - title, author names with the affiliations given on the NeurIPS site, and abstract
 - the link to the paper's official NeurIPS page
@@ -16,8 +16,8 @@ Not included: paper PDFs or full texts, reviews, discussions, email addresses, o
 
 ## Where it came from
 
-- The event list was downloaded from the NeurIPS 2026 Downloads page on neurips.cc on 2026-10-17.
-- Sessions, halls and times for posters missing from the official orals-and-posters file were read from each paper's public page on neurips.cc, one page at a time, slowly (roughly one page per second or two), with a plain user agent, from paths that robots.txt allows.
+- The event list was downloaded from the NeurIPS 2026 Downloads page on neurips.cc on 2026-11-05.
+- Sessions, halls and times for posters come from the orals-and-posters schedule file that the NeurIPS virtual site itself loads (`neurips-2026-orals-posters.json`), saved by hand in a browser on 2026-11-04. Both files were saved in a browser by a person; no crawler was used for them.
 - The canonical institution names and the merged schedule fields are our own work and may contain mistakes.
 
 ## Why we think reuse is fine
@@ -25,7 +25,7 @@ Not included: paper PDFs or full texts, reviews, discussions, email addresses, o
 - Our reading of neurips.cc is that its pages state no licence or terms for this data either way, and that NeurIPS itself offers the event list for download.
 - NeurIPS 2026 papers are handled through OpenReview. Its Terms of Use (https://openreview.net/legal/terms) define a work's metadata to include its title, authors and abstract, and dedicate that metadata to the public domain under CC0 1.0, to the extent anyone holds a copyright interest in it.
 - Authors keep the copyright in their papers (https://neurips.cc/FAQ/Copyright). This repository does not contain papers, only the metadata above, and every record links back to the official page.
-- This is our own summary of public terms, checked on 2026-10-20. It is not legal advice and it can go out of date.
+- This is our own summary of public terms, checked on 2026-10-20 and again on 2026-11-03. It is not legal advice and it can go out of date.
 
 ## Personal data
 
@@ -35,7 +35,7 @@ Contact: ritwikvashistha@gmail.com
 
 ## Accuracy and freshness
 
-- This is a snapshot from 2026-10-17, with schedule details read on 2026-10-18 to 2026-10-20. Sessions and times can change, and poster board numbers were not published when we collected the data. Check neurips.cc for the official schedule.
+- This is a snapshot: the event list of 2026-11-05 and the schedule file of 2026-11-04. Sessions and times change (about 2% of posters moved between our snapshots of October and November), and poster board numbers were not published when we collected the data. Check neurips.cc for the official schedule.
 - Institution names are merged heuristically. Some institutions may be split across spellings or merged by mistake; reports are welcome.
 - This project is independent. It is not affiliated with, or endorsed by, NeurIPS or OpenReview. "NeurIPS" is used only to say which conference the data is about.
 

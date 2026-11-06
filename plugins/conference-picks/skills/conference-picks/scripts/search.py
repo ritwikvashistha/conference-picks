@@ -20,7 +20,7 @@ from datetime import datetime, timedelta, timezone
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "papers.json.gz")
 INST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "institutions.json")
 HOME = os.environ.get("CONFERENCE_PICKS_HOME") or os.path.expanduser("~/.conference-picks")  # your own datasets, one folder each
-NEURIPS = {"name": "NeurIPS 2026", "slug": "neurips2026", "item": "poster", "paper_types": ["Poster"], "snapshot_date": "2026-10-17",
+NEURIPS = {"name": "NeurIPS 2026", "slug": "neurips2026", "item": "poster", "paper_types": ["Poster"], "snapshot_date": "2026-11-05",
            "zones": {"Sydney": "Australia/Sydney", "Atlanta": "America/New_York", "Paris": "Europe/Paris"}, "notice": "bundled snapshot, see DATA_NOTICE.md"}
 CTX = {"data": DATA, "inst": INST, "meta": NEURIPS, "ids": set()}  # the dataset in use: the bundled NeurIPS data unless --data says otherwise
 STOP = set("""a about above after again all also am an and any are as at be because been before being below between both but by can
