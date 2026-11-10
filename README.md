@@ -58,7 +58,13 @@ Ask in plain words. For example:
 
 Your paper's id is the number at the end of its page, `neurips.cc/virtual/2026/poster/<id>`. You can also give your name ("My name is First Last") or paste an abstract.
 
-To base the picks on all your work rather than one paper, give your ORCID, or attach a BibTeX export from your Google Scholar profile (it will not read Scholar pages itself). See [Profile mode](#profile-mode-optional-more-tokens).
+**Based on all your work.** Instead of one paper, it can read your recent papers, group them into up to three research areas and ask which to focus on. Give it one of these:
+
+- **A BibTeX file from Google Scholar.** On your Scholar profile, tick the box above your list of papers to select them all, click **Export**, choose **BibTeX**, and attach the file to the chat.
+- **Your paper titles**, pasted one per line.
+- **Your ORCID**, for example "My ORCID is 0000-0002-1825-0097". It finds your works on OpenAlex, or on your ORCID record if OpenAlex does not know you yet. This needs the internet, which chat apps often block (ChatGPT usually does); it then asks you for one of the other two.
+
+A Google Scholar link alone will not work: Scholar blocks automated access, so it asks for the BibTeX file instead. Reading your work costs more tokens than starting from one paper.
 
 What you get: 15 to 25 papers, each with a one-line reason, grouped by site and session in local time, and up to 8 people worth talking to. It may ask how much to read first: choose **Standard** if unsure. Afterwards you can ask for "a calendar file" or "a spreadsheet" of the picks.
 
@@ -116,15 +122,7 @@ The agent asks how much reading you want, or defaults to Standard. Measured extr
 | Quick | the ranked list only | a few thousand (estimate) |
 | Standard (default) | one line per candidate, then the start of about 30 abstracts | about 35K |
 | Deep | the abstracts of all 150 candidates | about 115K |
-| Profile mode, with Standard | your works from OpenAlex, three pools, about 30 abstracts | about 45K (one test) |
-
-### Profile mode (optional, more tokens)
-
-By default the picks are based on one or more NeurIPS 2026 papers. If you would rather base them on your whole body of work, share your Google Scholar link, name, ORCID, a BibTeX export or a list of titles:
-
-> Here is my Google Scholar profile: https://scholar.google.com/citations?user=... Which NeurIPS 2026 papers should I see?
-
-Google Scholar has no API and blocks automated access, so the agent will not try to read it. It asks for your name (and institution) or ORCID instead, or a BibTeX export from your Scholar profile, or pasted titles. It finds your works on [OpenAlex](https://openalex.org), asks you to confirm it has the right person, groups your work into research areas, and proposes your top three. You choose which areas to prioritize, or accept its default (about half, 30% and 20% of the picks). It then searches each area separately. This reads more than a single paper, so it costs more tokens. In a Claude or ChatGPT chat, the sandbox may block api.openalex.org; then give a BibTeX export or paste your titles instead.
+| All your work, with Standard | your works from OpenAlex, three pools, about 30 abstracts | about 45K (one test) |
 
 ### How it works
 
@@ -132,6 +130,8 @@ Google Scholar has no API and blocks automated access, so the agent will not try
 2. `search.py` ranks all 9,145 posters with an abstract by word overlap with your abstract and the brief, and returns a pool of 150.
 3. The agent reads the promising candidates, picks 15 to 25, and explains each one in terms of your work.
 4. Output is grouped by site and session time, with times local to each site.
+
+When it reads all your work, it gets your recent works from [OpenAlex](https://openalex.org) by ORCID (or, when OpenAlex has not linked that ORCID, from the public ORCID record, with abstracts from OpenAlex by DOI or title), or from your BibTeX file or titles; with the internet it also looks up their abstracts. It groups them into research areas and proposes the top three. You choose which to prioritize, or accept its default (about half, 30% and 20% of the picks), and it searches each area separately. When the internet is blocked, the script says so and the agent asks for a BibTeX file or titles instead of searching the web.
 
 Other commands: `who --name "..."` and `who --affil "UT Austin"` look people and institutions up (spelling variants merged), `ics` writes a calendar file, `csv` writes a spreadsheet of the picks.
 
@@ -143,11 +143,11 @@ Checked on six papers from different research areas, with a separate LLM judging
 
 - The word search ranks by overlap, so a shared buzzword can crowd the top of the list. The agent is told to judge, not trust the order.
 - Poster board numbers were not published when the data was collected, and sessions can change.
-- Author lookup in the NeurIPS data is by name or affiliation. In profile mode, OpenAlex sometimes merges different people with similar names or has missing or wrong abstracts, so the agent checks with you.
+- Author lookup in the NeurIPS data is by name or affiliation. When it reads all your work, OpenAlex sometimes merges different people with similar names, may not know a newer ORCID, or has missing or wrong abstracts, so the agent checks the list with you. From a BibTeX file or titles without the internet it has titles only, which make rougher picks than abstracts.
 
 ### Privacy
 
-The search script and the importer send nothing anywhere: they run on your computer, or in your Claude or ChatGPT chat's own sandbox. The one exception is the optional `profile` command in profile mode, which sends the name, ORCID or paper titles you give it to api.openalex.org to look up your works. Whatever you give your agent goes to your agent's provider, as with any use of it.
+The search script and the importer send nothing anywhere: they run on your computer, or in your Claude or ChatGPT chat's own sandbox. The one exception is the `profile` command, used when it reads all your work: it sends the name, ORCID or paper titles you give it to api.openalex.org, and an ORCID also to pub.orcid.org, to look up your works. A BibTeX file or titles in a chat without the internet stay in that chat. Whatever you give your agent goes to your agent's provider, as with any use of it.
 
 ### Data
 

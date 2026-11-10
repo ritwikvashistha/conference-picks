@@ -13,6 +13,9 @@ BASELINE = "neurips-only-0.1.2:plugins/neurips-picks/skills/neurips-picks/SKILL.
 POINTER = "For another conference, or a dataset the user supplies, read `OTHER_CONFERENCES.md` in this folder first: it overrides the NeurIPS-specific parts below."
 # a chat app that loads only the skill's text (ChatGPT Free did): get the files from the release zip, never from the web
 FALLBACK = "If you cannot run these scripts or open this folder's files (some chat apps load only a skill's text), ask the user to attach the zip they installed from (`conference-picks-chatgpt.zip` or `conference-picks.zip`, both at https://github.com/ritwikvashistha/conference-picks/releases/latest), unzip it and use the folder in it that holds SKILL.md. Never search the web instead, and never invent papers."
+# profile --orcid falls back to the public ORCID record, and an offline sandbox gets a message saying what to ask for instead
+OLD_PRIVACY = "- The `profile` command sends only the name, ORCID or titles you give it to api.openalex.org. If it fails, offer another input."
+PRIVACY = "- The `profile` command sends only the name, ORCID or titles you give it to api.openalex.org (an ORCID also to pub.orcid.org). If it fails, do what its message says."
 sys.path.insert(0, HERE)
 import test_importer as ti  # its CSV fixture has the columns of a NeurIPS/ICML/ICLR "Downloads" file
 import test_text_entries as tt  # its two synthetic programs are what the examples in TEXT_PROGRAMS.md are imported against
@@ -42,16 +45,17 @@ class SkillText(unittest.TestCase):
         self.assertIn("NeurIPS 2026", description())
         self.assertIn("another conference", description())
 
-    def test_skill_md_differs_from_the_neurips_only_text_by_the_description_a_pointer_and_the_fallback(self):
+    def test_skill_md_differs_from_the_neurips_only_text_by_the_description_a_pointer_the_fallback_and_the_profile_line(self):
         diff = list(difflib.unified_diff(self.baseline().splitlines(), read(SKILL_MD).splitlines(), lineterm="", n=0))
         removed = [x[1:] for x in diff if x.startswith("-") and not x.startswith("---")]
         added = [x[1:] for x in diff if x.startswith("+") and not x.startswith("+++")]
-        self.assertEqual(len(removed), 1)
+        self.assertEqual(len(removed), 2)
         self.assertTrue(removed[0].startswith("description:"))
-        self.assertEqual([x for x in added if x.strip() and not x.startswith("description:")], [POINTER, FALLBACK])
+        self.assertEqual(removed[1], OLD_PRIVACY)
+        self.assertEqual([x for x in added if x.strip() and not x.startswith("description:")], [POINTER, FALLBACK, PRIVACY])
 
-    def test_skill_md_grew_by_at_most_650_bytes(self):
-        self.assertLessEqual(len(read(SKILL_MD).encode()) - len(self.baseline().encode()), 650)
+    def test_skill_md_grew_by_at_most_700_bytes(self):
+        self.assertLessEqual(len(read(SKILL_MD).encode()) - len(self.baseline().encode()), 700)
 
     def test_the_fallback_names_the_zips_that_make_zip_builds_and_the_readme_links(self):
         for name in ("conference-picks.zip", "conference-picks-chatgpt.zip"):

@@ -13,7 +13,7 @@
   search.py list                                                                         # datasets: the bundled NeurIPS 2026 data and your own
   search.py find --data icml2026 --paper 64869                                           # find, show, who, ics and csv take --data (slug or folder)
 """
-import argparse, difflib, gzip, json, math, os, re, sys, time, unicodedata, urllib.parse, urllib.request
+import argparse, difflib, gzip, json, math, os, re, sys, time, unicodedata, urllib.error, urllib.parse, urllib.request
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -219,13 +219,72 @@ def who(a):
         print(f"{p['id']}\t{place(p)}\t{p['title']}\t{'; '.join(hit)}")
 
 
-def oa(path, **params):
-    url = "https://api.openalex.org/" + path + ("?" + urllib.parse.urlencode(params) if params else "")
+UA = "conference-picks agent skill (https://github.com/ritwikvashistha/conference-picks)"
+OFFLINE = ("Do not search the web for the user's works instead. Ask for a BibTeX export from their Google Scholar profile (tick the box above the "
+           "list of papers to select them all, then Export, BibTeX) or a pasted list of their paper titles, and run `profile --bibtex FILE` or "
+           "`profile --titles-file FILE` without --lookup; or use their NeurIPS 2026 paper ids.")
+
+
+class Unreachable(Exception):
+    """A lookup service cannot be used from here: no network in the sandbox, a blocking proxy, an outage."""
+
+
+def fetch(url):
+    """JSON from a URL, or None for a 404 (no such author or record). Raises Unreachable, with the reason, when the service cannot be used."""
+    host = urllib.parse.urlsplit(url).netloc
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "conference-picks agent skill (https://github.com/ritwikvashistha/conference-picks)"}), timeout=30) as r:
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"}), timeout=30) as r:
             return json.load(r)
-    except Exception as e:
-        sys.exit(f"OpenAlex request failed ({e}). Offer another input: a BibTeX export, pasted titles, or NeurIPS paper ids.")
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise Unreachable(f"{host} answered HTTP {e.code}" + (", as a sandbox's network filter does" if e.code in (401, 403, 407) else ""))
+    except (OSError, ValueError) as e:  # URLError and timeouts are OSErrors; ValueError: not JSON (a proxy's page)
+        raise Unreachable(f"cannot reach {host} ({getattr(e, 'reason', e)}): this environment is probably offline, as chat sandboxes often are")
+
+
+def oa(path, **params):
+    return fetch("https://api.openalex.org/" + path + ("?" + urllib.parse.urlencode(params) if params else ""))
+
+
+def venue(w):
+    return ((w.get("primary_location") or {}).get("source") or {}).get("display_name") or ""
+
+
+def dig(x, *keys):
+    for k in keys:
+        x = x.get(k) if isinstance(x, dict) else None
+    return x
+
+
+def orcid_works(record):
+    """A public ORCID record's works (the pub.orcid.org v3.0 /works JSON) -> title, year, venue and DOI, newest first."""
+    out = []
+    for g in (record or {}).get("group") or []:
+        s = (g.get("work-summary") or [{}])[0]
+        doi = next((i.get("external-id-value") or "" for i in dig(s, "external-ids", "external-id") or [] if (i.get("external-id-type") or "").lower() == "doi"), "")
+        year, title = str(dig(s, "publication-date", "year", "value") or ""), dig(s, "title", "title", "value") or ""
+        if title:
+            out.append(dict(title=title, year=int(year) if year.isdigit() else "", venue=dig(s, "journal-title", "value") or "", cited="", abstract="", doi=doi.lower()))
+    return sorted(out, key=lambda w: -(w["year"] or 0))
+
+
+def add_abstracts(works):
+    """Missing abstracts from OpenAlex: by DOI (50 per request), then by title (a retitled paper may not be found)."""
+    by_doi = {w["doi"]: w for w in works if w.get("doi") and not w["abstract"]}
+    keys = list(by_doi)
+    for i in range(0, len(keys), 50):
+        d = oa("works", filter="doi:" + "|".join(keys[i:i + 50]), select="doi,abstract_inverted_index,cited_by_count,primary_location", **{"per-page": 50})
+        for r in (d or {}).get("results") or []:
+            w = by_doi.get((r.get("doi") or "").lower().replace("https://doi.org/", ""))
+            if w:
+                w.update(abstract=inverted(r.get("abstract_inverted_index")), cited=r.get("cited_by_count", ""), venue=w["venue"] or venue(r))
+    for w in works:
+        if not w["abstract"]:
+            for r in (oa("works", search=w["title"], select="title,abstract_inverted_index", **{"per-page": 3}) or {}).get("results") or []:
+                if difflib.SequenceMatcher(None, fold(w["title"]), fold(r["title"] or "")).ratio() > 0.85:
+                    w["abstract"] = inverted(r.get("abstract_inverted_index")); break
+            time.sleep(0.15)
 
 
 def inverted(ii):
@@ -249,9 +308,16 @@ def bib_works(text):
 
 
 def profile(a):
-    works = []
+    try:
+        run_profile(a)
+    except Unreachable as e:
+        sys.exit(f"{e}. {OFFLINE}")
+
+
+def run_profile(a):
+    works, notes = [], []
     if a.name:  # candidates only: names are ambiguous and OpenAlex sometimes merges different people
-        res = oa("authors", search=a.name, **{"per-page": 8})["results"]
+        res = (oa("authors", search=a.name, **{"per-page": 8}) or {}).get("results") or []
         if a.affil:
             res.sort(key=lambda x: not any(fold(a.affil) in fold(i.get("display_name", "")) for i in x.get("last_known_institutions") or []))
         print("openalex_id\tname\tinstitutions\tworks\tcitations\ttopics")
@@ -261,10 +327,23 @@ def profile(a):
         print("# check institutions and topics with the user, then re-run with --id")
         return
     if a.id or a.orcid:
-        aid = a.id.rsplit("/", 1)[-1] if a.id else oa("authors/orcid:" + a.orcid.rsplit("/", 1)[-1], select="id")["id"].rsplit("/", 1)[-1]
-        d = oa("works", filter=f"author.id:{aid},from_publication_date:{a.since}-01-01", sort="publication_date:desc", select="title,publication_year,primary_location,cited_by_count,abstract_inverted_index", **{"per-page": a.n})
-        works = [dict(title=w["title"] or "", year=w["publication_year"], venue=((w.get("primary_location") or {}).get("source") or {}).get("display_name") or "",
-                      cited=w["cited_by_count"], abstract=inverted(w.get("abstract_inverted_index"))) for w in d["results"]]
+        orcid = a.orcid.strip().rstrip("/").rsplit("/", 1)[-1] if a.orcid else ""
+        aid = a.id.rsplit("/", 1)[-1] if a.id else ((oa("authors/orcid:" + orcid, select="id") or {}).get("id") or "").rsplit("/", 1)[-1]
+        if aid:
+            d = oa("works", filter=f"author.id:{aid},from_publication_date:{a.since}-01-01", sort="publication_date:desc", select="title,publication_year,primary_location,cited_by_count,abstract_inverted_index", **{"per-page": a.n})
+            works = [dict(title=w["title"] or "", year=w["publication_year"], venue=venue(w), cited=w["cited_by_count"], abstract=inverted(w.get("abstract_inverted_index")))
+                     for w in (d or {}).get("results") or []]
+        if orcid and not works:  # OpenAlex has not linked this ORCID to an author (common for newer ORCIDs): read the ORCID record itself
+            record = fetch(f"https://pub.orcid.org/v3.0/{orcid}/works")
+            if record is None:
+                sys.exit(f"there is no public ORCID record {orcid}: check the ORCID with the user, or ask for a BibTeX export or a list of titles")
+            works = [w for w in orcid_works(record) if not w["year"] or w["year"] >= a.since]
+            if not works:
+                sys.exit(f"the ORCID record {orcid} lists no public works since {a.since}: ask for a BibTeX export or a list of titles")
+            notes.append("# OpenAlex has no author with this ORCID, so these works come from the ORCID record, with abstracts from OpenAlex where it has the paper")
+            a.lookup = True
+        elif not works:
+            sys.exit(f"OpenAlex lists no works for {a.id} since {a.since}: check the id with the user, or ask for a BibTeX export or a list of titles")
     elif a.bibtex:
         works = bib_works(open(a.bibtex, encoding="utf-8", errors="replace").read())
     elif a.titles_file:
@@ -272,13 +351,13 @@ def profile(a):
     else:
         sys.exit("give --name, --id, --orcid, --bibtex or --titles-file")
     works = works[: a.n]
-    if a.lookup:  # abstracts for BibTeX or title lists, matched by title (a retitled paper may not be found)
-        for w in works:
-            if not w["abstract"]:
-                for r in oa("works", search=w["title"], select="title,abstract_inverted_index", **{"per-page": 3})["results"]:
-                    if difflib.SequenceMatcher(None, fold(w["title"]), fold(r["title"] or "")).ratio() > 0.85:
-                        w["abstract"] = inverted(r.get("abstract_inverted_index")); break
-                time.sleep(0.15)
+    if a.lookup:  # abstracts for an ORCID record, BibTeX or a title list
+        try:
+            add_abstracts(works)
+        except Unreachable as e:  # keep what we have: titles alone still make (weaker) queries
+            notes.append(f"# could not look up abstracts ({e}); continuing with titles only, which make weaker queries")
+    for note in notes:
+        print(note)
     for n, w in enumerate(works, 1):
         print(f"#{n} {w['year']} | {w['title']} | {w['venue']}" + (f" | cited {w['cited']}" if w["cited"] != "" else "") + ("" if a.no_abstract or not w["abstract"] else "\n    " + cut(w["abstract"], a.chars)))
     print(f"# {len(works)} works, {sum(bool(w['abstract']) for w in works)} with abstracts" + (f"; saved to {a.save}" if a.save else ""))
@@ -368,9 +447,9 @@ if __name__ == "__main__":
     c.add_argument("ids", help="comma-separated paper ids")
     pr = sub.add_parser("profile"); pr.set_defaults(fn=profile)
     pr.add_argument("--name"); pr.add_argument("--affil", help="rank name matches by institution")
-    pr.add_argument("--id", help="OpenAlex author id"); pr.add_argument("--orcid")
+    pr.add_argument("--id", help="OpenAlex author id"); pr.add_argument("--orcid", help="ORCID iD: works from OpenAlex, else from the public ORCID record")
     pr.add_argument("--bibtex", help="BibTeX export, for example from a Google Scholar profile"); pr.add_argument("--titles-file", help="one paper title per line")
-    pr.add_argument("--lookup", action="store_true", help="fetch abstracts from OpenAlex by title"); pr.add_argument("--since", type=int, default=datetime.now().year - 5)
+    pr.add_argument("--lookup", action="store_true", help="fetch abstracts from OpenAlex by DOI or title"); pr.add_argument("--since", type=int, default=datetime.now().year - 5)
     pr.add_argument("-n", type=int, default=30, help="max works (default 30)"); pr.add_argument("--chars", type=int, default=450)
     pr.add_argument("--no-abstract", action="store_true"); pr.add_argument("--save", help="write the works to this JSON file")
     v = sub.add_parser("csv"); v.set_defaults(fn=to_csv); v.add_argument("--data", help=DATA_HELP)

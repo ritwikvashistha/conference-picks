@@ -67,7 +67,7 @@ Use it when the user wants the picks based on their whole body of work, not one 
 - **BibTeX or titles:** `profile --bibtex scholar.bib --lookup --save profile.json` or `profile --titles-file titles.txt --lookup --save profile.json`. `--lookup` fetches abstracts from OpenAlex by title; some papers will not be found, and titles alone make weak queries.
 - If the user has NeurIPS 2026 papers (`who --name` finds them), also run `show <ids> --no-abstract` for them: you need their session slots and co-authors for step 5. Use them as `--paper` in P3 for the area they belong to.
 - If you cannot ask the user to confirm the OpenAlex author, choose the candidate whose institution matches the one the user gave and whose recent works fit their field, and say so.
-- The `profile` command sends only the name, ORCID or titles you give it to api.openalex.org. If it fails, offer another input.
+- The `profile` command sends only the name, ORCID or titles you give it to api.openalex.org (an ORCID also to pub.orcid.org). If it fails, do what its message says.
 
 **P2. Propose areas.** Group the works into research areas. Propose the three most important, ranked, each with one line and its work numbers. Weigh recent output and what the user cares about. Ask which areas to prioritize. The default is your three in your order, with about half, 30% and 20% of the picks. If you cannot ask or get no answer, use the default. The user can pick one to three areas, reorder them, or name their own.
 
