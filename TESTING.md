@@ -4,7 +4,7 @@ Thanks for testing. It takes about 30 minutes: run the skill on your own work, t
 
 ## 1. Run it
 
-- Install it as described under "Install" in [README.md](README.md) (Claude Code, Codex or claude.ai).
+- Install it as described under "Install" in [README.md](README.md) (Claude, ChatGPT, Claude Code or Codex).
 - Ask your agent, with your own NeurIPS 2026 paper id (if you have none, paste an abstract):
 
   > I'm going to NeurIPS 2026. My paper there is id <your paper id>. Which papers should I see?
