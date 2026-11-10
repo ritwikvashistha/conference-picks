@@ -77,7 +77,7 @@ def inst_data():
 def build(papers):
     """TF-IDF (sublinear tf, smooth idf, unigrams + bigrams, min_df 2, L2) with an inverted index.
     ponytail: rebuilt every run (a few seconds); cache to disk if that gets annoying."""
-    ids = [i for i, p in enumerate(papers) if wanted(p) and p.get("abstract") and p["id"]]  # 6 reproducibility-track posters have no poster page/id, so cannot be linked
+    ids = [i for i, p in enumerate(papers) if wanted(p) and p.get("abstract") and p["id"]]  # a record without an id (18 tutorials in the bundled data) cannot be shown or linked
     tf = {i: Counter(terms(papers[i]["title"] + ". " + papers[i]["abstract"])) for i in ids}
     df = Counter(t for c in tf.values() for t in c)
     idf = {t: math.log((1 + len(ids)) / (1 + n)) + 1 for t, n in df.items() if n >= 2}
@@ -138,9 +138,13 @@ def find(a):
         queries.append(vecs[i]); own.add(i)
     texts = [a.text] if a.text else []
     texts += [open(f, encoding="utf-8").read() for f in a.text_file or []]
+    if bool(a.profile) != bool(a.use):
+        sys.exit("give --profile and --use together: --use takes work numbers from the profile list, e.g. 1,4,7")
     if a.profile:  # works saved by `profile --save`; --use picks them by number
         works = json.load(open(a.profile, encoding="utf-8"))
         for n in a.use.split(","):
+            if not n.strip().isdigit() or not 1 <= int(n) <= len(works):
+                sys.exit(f"--use {a.use}: work numbers run from 1 to {len(works)}")
             w = works[int(n) - 1]
             texts.append(w["title"] + ". " + w["abstract"])
     queries += [vec(Counter(terms(t))) for t in texts]
@@ -198,12 +202,12 @@ def institutions(query):
 def who(a):
     if not (a.name or a.affil):
         sys.exit("give --name and/or --affil")
-    words = (a.name or "").lower().split()
+    words = fold(a.name or "").split()  # accents ignored: "Lereverend" finds "Lerévérend"
     want, table = institutions(a.affil) if a.affil else ([], {})
     af = None if want or not a.affil else re.compile(a.affil, re.I)  # unknown institution: treat the text as a regex
     rows = []
     for p in load():
-        hit = [f"{n} ({x})" for n, x in p["authors"] if all(w in n.lower() for w in words)
+        hit = [f"{n} ({x})" for n, x in p["authors"] if all(w in fold(n) for w in words)
                and (not a.affil or (set(table.get(x, [])) & set(want) if want else af.search(x)))]
         if wanted(p) and hit:
             rows.append((p.get("city") or "~", p.get("local_start") or "~", p, hit))
@@ -218,7 +222,7 @@ def who(a):
 def oa(path, **params):
     url = "https://api.openalex.org/" + path + ("?" + urllib.parse.urlencode(params) if params else "")
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "neurips-picks agent skill"}), timeout=30) as r:
+        with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "conference-picks agent skill (https://github.com/ritwikvashistha/conference-picks)"}), timeout=30) as r:
             return json.load(r)
     except Exception as e:
         sys.exit(f"OpenAlex request failed ({e}). Offer another input: a BibTeX export, pasted titles, or NeurIPS paper ids.")
@@ -359,7 +363,7 @@ if __name__ == "__main__":
     s = sub.add_parser("show"); s.set_defaults(fn=show); s.add_argument("--data", help=DATA_HELP)
     s.add_argument("ids", help="comma-separated paper ids"); s.add_argument("--chars", type=int, help="truncate abstracts"); s.add_argument("--no-abstract", action="store_true", help="title, authors, where only")
     w = sub.add_parser("who"); w.set_defaults(fn=who); w.add_argument("--data", help=DATA_HELP)
-    w.add_argument("--name", help="author name (all words must match)"); w.add_argument("--affil", help="regex on affiliation")
+    w.add_argument("--name", help="author name (all words must match)"); w.add_argument("--affil", help="institution name or acronym (UT Austin, MIT); an unknown one is a regex on the raw affiliation")
     c = sub.add_parser("ics"); c.set_defaults(fn=ics); c.add_argument("--data", help=DATA_HELP)
     c.add_argument("ids", help="comma-separated paper ids")
     pr = sub.add_parser("profile"); pr.set_defaults(fn=profile)

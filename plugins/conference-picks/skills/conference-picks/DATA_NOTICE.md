@@ -19,6 +19,7 @@ Not included: paper PDFs or full texts, reviews, discussions, email addresses, o
 - The event list was downloaded from the NeurIPS 2026 Downloads page on neurips.cc on 2026-11-05.
 - Sessions, halls and times for posters come from the orals-and-posters schedule file that the NeurIPS virtual site itself loads (`neurips-2026-orals-posters.json`), saved by hand in a browser on 2026-11-04. Both files were saved in a browser by a person; no crawler was used for them.
 - The canonical institution names and the merged schedule fields are our own work and may contain mistakes.
+- Four authors gave an email address as their affiliation on the NeurIPS site. We replaced each one with the institution of its domain (for example `@ecs.soton.ac.uk` became University of Southampton), so the bundled data holds no email addresses.
 
 ## Why we think reuse is fine
 
