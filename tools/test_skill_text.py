@@ -12,7 +12,7 @@ SKILL_MD, OTHER, TEXT = os.path.join(SKILL, "SKILL.md"), os.path.join(SKILL, "OT
 BASELINE = "neurips-only-0.1.2:plugins/neurips-picks/skills/neurips-picks/SKILL.md"  # the shipped NeurIPS-only skill text
 POINTER = "For another conference, or a dataset the user supplies, read `OTHER_CONFERENCES.md` in this folder first: it overrides the NeurIPS-specific parts below."
 # a chat app that loads only the skill's text (ChatGPT Free did): get the files from the release zip, never from the web
-FALLBACK = "If you cannot run these scripts or open this folder's files (some chat apps load only a skill's text), ask the user to attach `conference-picks.zip` from https://github.com/ritwikvashistha/conference-picks/releases/latest, then unzip it and use its `conference-picks` folder. Never search the web for papers or the user's works instead, and never invent papers."
+FALLBACK = "If you cannot run these scripts or open this folder's files (some chat apps load only a skill's text), ask the user to attach the zip they installed from (`conference-picks-chatgpt.zip` or `conference-picks.zip`, both at https://github.com/ritwikvashistha/conference-picks/releases/latest), unzip it and use the folder in it that holds SKILL.md. Never search the web instead, and never invent papers."
 sys.path.insert(0, HERE)
 import test_importer as ti  # its CSV fixture has the columns of a NeurIPS/ICML/ICLR "Downloads" file
 import test_text_entries as tt  # its two synthetic programs are what the examples in TEXT_PROGRAMS.md are imported against
@@ -53,9 +53,11 @@ class SkillText(unittest.TestCase):
     def test_skill_md_grew_by_at_most_650_bytes(self):
         self.assertLessEqual(len(read(SKILL_MD).encode()) - len(self.baseline().encode()), 650)
 
-    def test_the_fallback_names_the_zip_that_make_zip_builds_and_the_readme_links(self):
-        self.assertIn("dist/conference-picks.zip", read(os.path.join(HERE, "make_zip.py")))
-        self.assertIn("releases/latest/download/conference-picks.zip", read(os.path.join(ROOT, "README.md")))
+    def test_the_fallback_names_the_zips_that_make_zip_builds_and_the_readme_links(self):
+        for name in ("conference-picks.zip", "conference-picks-chatgpt.zip"):
+            self.assertIn("`%s`" % name, FALLBACK)
+            self.assertIn("dist/" + name, read(os.path.join(HERE, "make_zip.py")))
+            self.assertIn("releases/latest/download/" + name, read(os.path.join(ROOT, "README.md")))
 
     def test_the_pointer_file_exists_and_stays_short(self):
         self.assertTrue(os.path.isfile(OTHER), "OTHER_CONFERENCES.md is missing")

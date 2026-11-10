@@ -11,7 +11,7 @@ For another conference, or a dataset the user supplies, read `OTHER_CONFERENCES.
 
 Commands use `${CLAUDE_SKILL_DIR}`, the folder that holds this SKILL.md. Claude Code expands it; other agents (such as Codex) do not, so use that folder's real path instead. Put working files (`brief.txt`, `profile.json`, pool files) in a scratch folder such as `/tmp/conference-picks/` (create it first) and pass full paths, not in the user's project. If you cannot write files (read-only sandbox), pass the brief inline with `--text` and print any deliverable in your reply. Write deliverables (`.ics`, `.csv`) to the current folder.
 
-If you cannot run these scripts or open this folder's files (some chat apps load only a skill's text), ask the user to attach `conference-picks.zip` from https://github.com/ritwikvashistha/conference-picks/releases/latest, then unzip it and use its `conference-picks` folder. Never search the web for papers or the user's works instead, and never invent papers.
+If you cannot run these scripts or open this folder's files (some chat apps load only a skill's text), ask the user to attach the zip they installed from (`conference-picks-chatgpt.zip` or `conference-picks.zip`, both at https://github.com/ritwikvashistha/conference-picks/releases/latest), unzip it and use the folder in it that holds SKILL.md. Never search the web instead, and never invent papers.
 
 ## 1. Get the user's work
 Two ways in. The default is cheaper; profile mode is optional and costs more tokens (see "Profile mode" below).

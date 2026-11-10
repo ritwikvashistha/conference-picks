@@ -1,6 +1,6 @@
 {
   "name": "conference-picks",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Pick the papers and authors most relevant to your own work at NeurIPS 2026 or another conference, grouped by site, session and local time",
   "author": {
     "name": "Ritwik Vashistha"
