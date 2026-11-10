@@ -28,7 +28,7 @@ git clone https://github.com/ritwikvashistha/conference-picks
 cp -r conference-picks/plugins/conference-picks/skills/conference-picks ~/.claude/skills/
 ```
 
-**claude.ai:** run `python3 tools/make_zip.py` to build `dist/conference-picks.zip`, then upload it as a skill in your claude.ai settings. This route is untested, and profile mode needs access to api.openalex.org, which a sandboxed environment may block.
+**claude.ai** (the chat in the Claude app, on the web, desktop or phone): download [conference-picks.zip](https://github.com/ritwikvashistha/conference-picks/releases/latest/download/conference-picks.zip) from the latest release and upload it as a skill in your claude.ai settings (skills need code execution turned on). Each person uploads their own copy. Then ask as above; no command is needed. To build the zip yourself, run `python3 tools/make_zip.py`, which writes `dist/conference-picks.zip`. This route is untested, and profile mode needs access to api.openalex.org, which a sandboxed environment may block.
 
 **Codex** (CLI, IDE extension and app): Codex reads the same marketplace files, so the plugin route works the same way. Start a new session afterwards.
 
