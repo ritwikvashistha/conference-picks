@@ -57,11 +57,19 @@ class SkillText(unittest.TestCase):
     def test_skill_md_grew_by_at_most_700_bytes(self):
         self.assertLessEqual(len(read(SKILL_MD).encode()) - len(self.baseline().encode()), 700)
 
-    def test_the_fallback_names_the_zips_that_make_zip_builds_and_the_readme_links(self):
+    def test_the_fallback_names_the_zips_that_make_zip_builds_the_release_workflow_uploads_and_the_readme_links(self):
         for name in ("conference-picks.zip", "conference-picks-chatgpt.zip"):
             self.assertIn("`%s`" % name, FALLBACK)
             self.assertIn("dist/" + name, read(os.path.join(HERE, "make_zip.py")))
+            self.assertIn("dist/" + name, read(os.path.join(ROOT, ".github", "workflows", "release.yml")))
             self.assertIn("releases/latest/download/" + name, read(os.path.join(ROOT, "README.md")))
+
+    def test_the_readme_adds_the_marketplace_this_repository_holds(self):
+        with open(os.path.join(ROOT, ".claude-plugin", "marketplace.json"), encoding="utf-8") as f:
+            name = json.load(f)["plugins"][0]["name"]
+        readme = read(os.path.join(ROOT, "README.md"))
+        self.assertIn("**Add marketplace**, and type `ritwikvashistha/conference-picks`", readme)
+        self.assertIn("**%s** now appears among the plugins" % name, readme)
 
     def test_the_pointer_file_exists_and_stays_short(self):
         self.assertTrue(os.path.isfile(OTHER), "OTHER_CONFERENCES.md is missing")
