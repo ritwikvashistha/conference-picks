@@ -2,12 +2,12 @@
 """Tests for the text-entries input of scripts/import_dataset.py: programs that exist only as the text of a book of abstracts.
 
 Two synthetic programs are built from code, in our own words, so nothing from a real book is in the repo:
-  A  Presenter lines, sessions with rooms (one wrapped, one on its own line), posters without a room, footers and page numbers
+  A  Presenter lines, sessions with rooms (wrapped in four ways), posters without a room, footers and page numbers
   B  "Authors: Name (Affil), ..." lines, other heading words, no sessions or rooms at all, a header on every page
 
 Run: python3 tools/test_text_entries.py   (about a minute: each test runs the importer, some also run search.py)
 """
-import collections, csv, datetime, gzip, json, os, subprocess, sys, tempfile, textwrap, types, unittest
+import collections, csv, datetime, gzip, json, os, re, subprocess, sys, tempfile, textwrap, types, unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -26,16 +26,19 @@ SCHEDULE_A = [  # (day, [(block, start, end, [sessions (name, room, how the room
     (0, [("Plenary Talk 1", "9:00", "10:00", [None], 1), ("Plenary Talk 2", "10:15", "11:15", [None], 1),
          ("Parallel Sessions 1", "11:30", "13:00", [("Sampling methods", "A1", "line"), ("Spatial models", "B2", "wrap"), ("Causal questions", "C3", "line"), ("Open forum", "Main Hall", "bare")], 3),
          ("Poster Session I", "15:00", "17:00", [None], 14)]),
-    (1, [("Parallel Sessions 2", "9:00", "10:30", [("Sampling methods II", "A1", "line"), ("Spatial models II", "B2", "wrap"), ("Causal questions II", "C3", "bare"), ("Closing forum", "Main Hall", "line")], 3),
+    (1, [("Parallel Sessions 2", "9:00", "10:30", [("Sampling methods II", "A1", "split"), ("Spatial models II", "B2", "wrap"), ("Causal questions II", "C3", "bare"), ("Closing forum", "Main Hall", "line")], 3),
          ("Poster Session 2", "15:00", "17:00", [None], 14)]),
-    (2, [("Parallel Sessions 3", "9:00", "10:30", [("Survival analysis", "A1", "wrap"), ("Networks", "B2", "line"), ("Computation", "C3", "line")], 2)])]
+    (2, [("Parallel Sessions 3", "9:00", "10:30", [("Survival analysis", "A1", "wrap"), ("Networks", "B2", "line"), ("Computation", "C3", "hyphen")], 2)])]
 SCHEDULE_B = [(0, [("Oral block O1", "9:30", "11:00", [None], 10), ("Oral block O2", "11:30", "13:00", [None], 10), ("Poster block P1", "14:00", "15:30", [None], 10)]),
               (1, [("Oral block O3", "9:30", "11:00", [None], 10), ("Poster block P2", "14:00", "15:30", [None], 10)]),
               (2, [("Poster block P3", "10:00", "11:30", [None], 10)])]
 
 
 def session_lines(name, room, how):
-    return {"line": ["%s (Room %s)" % (name, room)], "wrap": ["%s (Room" % name, room + ")"], "bare": [name, "(Room %s)" % room]}[how]
+    """split and hyphen: the second line looks like a whole heading by itself ("II (Room A1)", "tation (Room C3)"), as in real books."""
+    head, last = name.rsplit(" ", 1) if " " in name else (name, "")
+    return {"line": ["%s (Room %s)" % (name, room)], "wrap": ["%s (Room" % name, room + ")"], "bare": [name, "(Room %s)" % room],
+            "split": [head, "%s (Room %s)" % (last, room)], "hyphen": [name[:5] + "-", "%s (Room %s)" % (name[5:], room)]}[how]
 
 
 LAYOUTS = {
@@ -234,6 +237,29 @@ class TextEntries(unittest.TestCase):
         self.assertEqual(by[("Spatial models", "B2")], 3)  # "Spatial models (Room" + "B2)"
         self.assertEqual(by[("Open forum", "Main Hall")], 3)  # "Open forum" + "(Room Main Hall)"
         self.assertEqual(by[(None, None)], 30)  # plenary talks and posters: no session, no hall
+
+    def test_a_heading_whose_second_line_looks_whole_is_joined_and_listed_for_checking(self):
+        r = self.imported(self.a, mapping("a"))
+        by = collections.Counter((x.get("session"), x.get("hall")) for x in self.records())
+        self.assertEqual(by[("Sampling methods II", "A1")], 3)  # "Sampling methods" + "II (Room A1)", not a session called "II"
+        self.assertEqual(by[("Computation", "C3")], 2)  # "Compu-" + "tation (Room C3)": the line-end hyphen goes
+        self.assertFalse([x for x in self.records() if x["abstract"].endswith(("Sampling methods", "Compu-"))])  # nor did the first line stay in an abstract
+        joined = [l for l in r.stdout.splitlines() if l.startswith("joined headings (check that each is one heading): ")]
+        self.assertEqual(len(joined), 1, r.stdout)
+        for heading in ("Sampling methods II (Room A1)", "Computation (Room C3)", "Spatial models (Room B2)"):
+            self.assertIn('"%s"' % heading, joined[0])
+        self.assertNotIn("lowercase", r.stdout)
+
+    def test_a_heading_cut_off_under_an_abstract_is_a_warning_and_a_sentence_above_a_heading_is_not_joined(self):
+        text = self.a.text
+        self.assertEqual(text.count("\nCompu-\n"), 1)
+        cut = re.sub(r"\n\n+Compu-\n", "\nCompu-\n", text)  # no blank line: "Compu-" now reads as the last line of the abstract above
+        aside = text.replace("\nNetworks (Room B2)\n", "\nJoint work with the organisers.\nNetworks (Room B2)\n")
+        self.assertNotEqual(cut, text); self.assertNotEqual(aside, text)
+        r = self.imported(types.SimpleNamespace(text=cut), mapping("a"))
+        self.assertIn('warning: 1 heading starts in lowercase, so the start of each is probably on the line above, inside the previous abstract: "tation (Room C3)"', r.stdout)
+        self.imported(types.SimpleNamespace(text=aside), mapping("a"))
+        self.assertEqual(collections.Counter(x.get("session") for x in self.records())["Networks"], 2)
 
     def test_day_and_block_are_carried_to_every_entry_and_the_poster_block_clears_the_session(self):
         self.imported(self.a, mapping("a"))

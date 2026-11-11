@@ -188,23 +188,38 @@ def extract(text, cfg, year):
             if m:
                 return k, m
 
-    st, items, i = collections.Counter(), [], 0  # items: None for a blank line, False for a dropped one, else ("text", line, page), ("head", kind, match, line, page) or ("mark", line, match, page)
+    def glue(s, t):  # two lines of one heading: a line-end hyphen goes before a lowercase word ("Tech-" "nologies") and stays before a capital ("Multi-" "Model")
+        return (s[:-1] if t[:1].islower() else s) + t if s.endswith("-") else s + " " + t
+
+    st, items, i, wrapped = collections.Counter(), [], 0, []  # items: None for a blank line, False for a dropped one, else ("text", line, page), ("head", kind, match, line, page) or ("mark", line, match, page)
     while i < len(body):
         s, pg = body[i]
         if s is None:
             items.append(False); i += 1
             continue
         h = kind(s) if s else None
-        if s and not h and not marker.search(s) and i + 1 < len(body):  # a heading wrapped over two lines: joined only when the joined text is a heading and neither line is one alone
-            t = body[i + 1][0]
-            h = kind(s + " " + t) if t and not kind(t) and not marker.search(t) else None
+        if s and not h and not marker.search(s) and i + 1 < len(body):  # a heading wrapped over two lines
+            t, above = body[i + 1][0], body[i - 1][0] if i else None
+            if t and not marker.search(t):
+                alone = kind(t)
+                if not alone:  # neither line is a heading alone, the joined text is
+                    h = kind(glue(s, t))
+                elif not above or kind(above):  # the second line looks like a heading by itself (its first words are on the line above): joined when the
+                    h = kind(glue(s, t)) if not s.endswith((".", "!", "?")) else None  # first line stands alone under a blank line or a heading, and is no sentence's end
+                    h = h if h and h[0] == alone[0] else None
             if h:
-                s, i, st["joins"] = s + " " + t, i + 1, st["joins"] + 1
+                s, i, st["joins"] = glue(s, t), i + 1, st["joins"] + 1
+                wrapped.append(s)
         i += 1
         mk = marker.search(s) if s and not h else None
         items.append(("head", h[0], h[1], s, pg) if h else ("mark", s, mk, pg) if mk else ("text", s, pg) if s else None)
 
     seen = collections.Counter(it[1] for it in items if it and it[0] == "head")
+    cut = [it[3] for n, it in enumerate(items) if it and it[0] == "head" and it[3][:1].islower() and n and items[n - 1] and items[n - 1][0] == "text"]  # e.g. "nologies (Room 1101)"
+    # right under a line of text: the end of a heading whose first line went into the abstract above (a heading such as "de Finetti Lecture" under a blank line is fine)
+    if cut:
+        warns.append("%d heading%s start%s in lowercase, so the start of each is probably on the line above, inside the previous abstract: %s. Check those lines in the text" % (
+            len(cut), "s" if len(cut) > 1 else "", "" if len(cut) > 1 else "s", "; ".join(json.dumps(c[:60], ensure_ascii=False) for c in cut[:5]) + (" and %d more" % (len(cut) - 5) if len(cut) > 5 else "")))
     gone = ["text.headings.%s matched no line" % k for k, _ in kinds if not seen[k]] + ([] if any(it and it[0] == "mark" for it in items) else ["text.entry.marker matched no line"])
     if gone:
         fail(*gone)
@@ -295,7 +310,8 @@ def extract(text, cfg, year):
     warns += ["line repeated %d times: %r (a footer? add it to text.drop)" % (c, t[:60]) for t, c in collections.Counter(" ".join(s.split()) for s, _ in body if s).most_common(3) if c >= TEXT_REPEATS]
     return recs, errors, warns, "text: %d entries%s; headings: %s; wrapped headings joined %d; line-end hyphens joined %d, kept %d" % (
         n, " (%d with a session)" % sum(bool(r.get("session")) for r in recs) if "session" in heads else "",
-        ", ".join("%s %d" % (k, seen[k]) for k, _ in kinds), st["joins"], st["unhyphenated"], st["kept"])
+        ", ".join("%s %d" % (k, seen[k]) for k, _ in kinds), st["joins"], st["unhyphenated"], st["kept"]) + (
+        "\njoined headings (check that each is one heading): " + "; ".join(json.dumps(w if len(w) <= 64 else "..." + w[-60:], ensure_ascii=False) for w in wrapped[:12]) + (" and %d more" % (len(wrapped) - 12) if len(wrapped) > 12 else "") if wrapped else "")
 
 
 def unescape(s):

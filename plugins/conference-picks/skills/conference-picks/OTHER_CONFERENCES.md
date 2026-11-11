@@ -34,4 +34,4 @@ Follow SKILL.md from step 2 with `--data <slug>` on each command, for example `p
 ## Tell the user
 - With no schedule there is no calendar and no grouping by time.
 - A dataset comes from one file. If abstracts and times are in different files, ask the user to join them first.
-- Importing a new site's format is experimental: check the three samples.
+- A new site's format can import wrongly: check the three samples.

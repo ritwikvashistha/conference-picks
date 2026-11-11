@@ -22,7 +22,7 @@ Two ways in. The default is cheaper; profile mode is optional and costs more tok
 - **Optional: profile mode**, when the user gives a Google Scholar link, ORCID, a BibTeX export or a list of titles, or wants coverage beyond one paper. Go to "Profile mode".
 
 ## 2. Pick a budget
-Ask once. If you cannot ask, use Standard. Say the cost to the user in your first message (in the final one if you cannot talk first).
+Ask once. If you cannot ask, use Standard. Say the cost to the user in your first message (if you cannot talk first, as the second line of the final answer).
 
 | Mode | What you read | Extra tokens on top of your session's baseline (measured; yours may differ) |
 |---|---|---|
@@ -35,7 +35,7 @@ These come from test runs where a do-nothing agent run alone counted ~52K tokens
 ## 3. Search
 First write a search brief from the user's abstract(s), before you look at any candidates: about 25 short phrases (1-4 words; a few more is fine), one per line, saved to `brief.txt` in the scratch folder. Cover the core problems and methods, the names other communities use for the same ideas, and neighbouring subfields where similar problems are studied, even when they share no words with the abstract. Keyword search cannot cross a vocabulary gap by itself; the brief helps. It is scored as one extra query, weighted like one of the user's abstracts, so it adds reach without replacing them.
 
-`python3 ${CLAUDE_SKILL_DIR}/scripts/search.py find --paper <id> [--paper <id> ...] --text-file brief.txt` prints 150 candidates as TSV: rank, id, score, where, title, matched terms. For pasted abstracts, save them to `abstract.txt` and use `--text-file abstract.txt --text-file brief.txt` (each file is one query). The user's own papers are excluded. The order comes from keyword overlap, and a shared buzzword (for example "MMD") can fill the top ranks with weak matches while strong ones sit at rank 15-100: judge, do not trust the order. The matched terms mix whole phrases and single words, so treat them as hints. A `[oral]` tag in `where` marks an oral paper.
+`python3 ${CLAUDE_SKILL_DIR}/scripts/search.py find --paper <id> [--paper <id> ...] --text-file brief.txt` prints 150 candidates as TSV: rank, id, score, where, title, matched terms. For pasted abstracts, save them to `abstract.txt` and use `--text-file abstract.txt --text-file brief.txt` (each file is one query). Only the `--paper` ids are excluded; the user's other papers can still appear (step 4 covers them). The order comes from keyword overlap, and a shared buzzword (for example "MMD") can fill the top ranks with weak matches while strong ones sit at rank 15-100: judge, do not trust the order. The matched terms mix whole phrases and single words, so treat them as hints. A `[oral]` tag in `where` marks an oral paper.
 
 Keep every `show` output under about 15 KB, because bigger outputs get truncated or saved to a file you then have to hunt for: run `show` in batches of at most 12 ids (10 for Deep).
 
@@ -49,9 +49,9 @@ Relevant means the user would learn something from the paper or gain from talkin
 ## 5. Output
 Markdown. First line: where and when the user's own papers are presented; say "no session scheduled yet" for one without a slot.
 
-Group the picks by site (Sydney, Atlanta, Paris), then by session time, in date order. The `where` column already has the weekday, date and local time at that site, so copy it as given. Put picks with `-` under "Location not yet known" last, in rank order. Inside a group, order by your ranking and keep the overall rank on every line (for example `#3`), so the ranking is not lost by grouping.
+Group the picks by site (Sydney, Atlanta, Paris), then by session time, in date order. The `where` column already has the weekday, date and local time at that site, so use it as given as the session heading. Put picks with `-` under "Location not yet known" last, in rank order. Inside a group, order by your ranking and keep the overall rank on every line (for example `#3`), so the ranking is not lost by grouping.
 
-Per paper: title linked to `https://neurips.cc/virtual/2026/poster/<id>`, authors, one reason. End with up to 8 authors worth talking to (people on several picks; if nobody repeats, the authors of the picks closest to the user's work) and why. Leave out the user's own co-authors, and mark any pick that is in the same session slot as one of the user's own papers ("same slot as your poster"). Add a last line saying the times come from a snapshot (date in `DATA_NOTICE.md`) and may have changed.
+Per paper: title linked to `https://neurips.cc/virtual/2026/poster/<id>`, authors, one reason. End with up to 8 authors worth talking to (people on several picks; if nobody repeats, one or two authors from each of the picks closest to the user's work) and why, then the closing line on the user's group's work (step 4). Leave out the user's own co-authors, and mark any pick that is in the same session slot as one of the user's own papers ("same slot as your poster"). Add a last line saying the times come from a snapshot (date in `DATA_NOTICE.md`) and may have changed.
 
 If the user wants a calendar file: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py ics <picked ids> > conference-picks.ics` (times are converted to UTC; picks without a session yet are skipped and reported). To find other people from the user's institution: `python3 ${CLAUDE_SKILL_DIR}/scripts/search.py who --affil "UT Austin"` (any common name or acronym works: "MIT", "Tsinghua", "Google DeepMind"; spelling variants are merged). The first line gives the number of papers and author slots and the split by site. Unknown names fall back to a regex on the raw affiliation.
 

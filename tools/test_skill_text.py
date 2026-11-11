@@ -9,6 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 SKILL = os.path.join(ROOT, "plugins", "conference-picks", "skills", "conference-picks")
 SKILL_MD, OTHER, TEXT = os.path.join(SKILL, "SKILL.md"), os.path.join(SKILL, "OTHER_CONFERENCES.md"), os.path.join(SKILL, "TEXT_PROGRAMS.md")
+README, DOCS = os.path.join(ROOT, "README.md"), os.path.join(ROOT, "docs")  # the README is a short landing page; the details are in docs/
 BASELINE = "neurips-only-0.1.2:plugins/neurips-picks/skills/neurips-picks/SKILL.md"  # the shipped NeurIPS-only skill text
 POINTER = "For another conference, or a dataset the user supplies, read `OTHER_CONFERENCES.md` in this folder first: it overrides the NeurIPS-specific parts below."
 # a chat app that loads only the skill's text (ChatGPT Free did): get the files from the release zip, never from the web
@@ -16,6 +17,15 @@ FALLBACK = "If you cannot run these scripts or open this folder's files (some ch
 # profile --orcid falls back to the public ORCID record, and an offline sandbox gets a message saying what to ask for instead
 OLD_PRIVACY = "- The `profile` command sends only the name, ORCID or titles you give it to api.openalex.org. If it fails, offer another input."
 PRIVACY = "- The `profile` command sends only the name, ORCID or titles you give it to api.openalex.org (an ORCID also to pub.orcid.org). If it fails, do what its message says."
+EDITS = [  # (NeurIPS-only text, text now): the only rewordings allowed, each one a gap a test run hit
+    (OLD_PRIVACY, PRIVACY),
+    ("(in the final one if you cannot talk first)", "(if you cannot talk first, as the second line of the final answer)"),  # where the cost note goes
+    ("The user's own papers are excluded.",  # find drops only the ids it is given, so another paper of the user's came back as #1
+     "Only the `--paper` ids are excluded; the user's other papers can still appear (step 4 covers them)."),
+    ("so copy it as given.", "so use it as given as the session heading."),
+    ("if nobody repeats, the authors of the picks closest to the user's work) and why.",  # how many authors, and the order of the closing lines
+     "if nobody repeats, one or two authors from each of the picks closest to the user's work) and why, then the closing line on the user's group's work (step 4)."),
+]
 sys.path.insert(0, HERE)
 import test_importer as ti  # its CSV fixture has the columns of a NeurIPS/ICML/ICLR "Downloads" file
 import test_text_entries as tt  # its two synthetic programs are what the examples in TEXT_PROGRAMS.md are imported against
@@ -45,29 +55,33 @@ class SkillText(unittest.TestCase):
         self.assertIn("NeurIPS 2026", description())
         self.assertIn("another conference", description())
 
-    def test_skill_md_differs_from_the_neurips_only_text_by_the_description_a_pointer_the_fallback_and_the_profile_line(self):
-        diff = list(difflib.unified_diff(self.baseline().splitlines(), read(SKILL_MD).splitlines(), lineterm="", n=0))
+    def test_skill_md_differs_from_the_neurips_only_text_by_the_description_a_pointer_the_fallback_and_the_listed_edits(self):
+        edited = self.baseline()
+        for old, new in EDITS:
+            self.assertEqual(edited.count(old), 1, old)
+            edited = edited.replace(old, new)
+        diff = list(difflib.unified_diff(edited.splitlines(), read(SKILL_MD).splitlines(), lineterm="", n=0))
         removed = [x[1:] for x in diff if x.startswith("-") and not x.startswith("---")]
         added = [x[1:] for x in diff if x.startswith("+") and not x.startswith("+++")]
-        self.assertEqual(len(removed), 2)
+        self.assertEqual(len(removed), 1)
         self.assertTrue(removed[0].startswith("description:"))
-        self.assertEqual(removed[1], OLD_PRIVACY)
-        self.assertEqual([x for x in added if x.strip() and not x.startswith("description:")], [POINTER, FALLBACK, PRIVACY])
+        self.assertEqual([x for x in added if x.strip() and not x.startswith("description:")], [POINTER, FALLBACK])
 
-    def test_skill_md_grew_by_at_most_700_bytes(self):
-        self.assertLessEqual(len(read(SKILL_MD).encode()) - len(self.baseline().encode()), 700)
+    def test_skill_md_grew_by_at_most_900_bytes(self):
+        self.assertLessEqual(len(read(SKILL_MD).encode()) - len(self.baseline().encode()), 900)
 
     def test_the_fallback_names_the_zips_that_make_zip_builds_the_release_workflow_uploads_and_the_readme_links(self):
         for name in ("conference-picks.zip", "conference-picks-chatgpt.zip"):
             self.assertIn("`%s`" % name, FALLBACK)
             self.assertIn("dist/" + name, read(os.path.join(HERE, "make_zip.py")))
             self.assertIn("dist/" + name, read(os.path.join(ROOT, ".github", "workflows", "release.yml")))
-            self.assertIn("releases/latest/download/" + name, read(os.path.join(ROOT, "README.md")))
+            self.assertIn("releases/latest/download/" + name, read(README) + read(os.path.join(DOCS, "install.md")))
+        self.assertIn("releases/latest/download/conference-picks-chatgpt.zip", read(README))  # ChatGPT's only route stays on the landing page
 
     def test_the_readme_adds_the_marketplace_this_repository_holds(self):
         with open(os.path.join(ROOT, ".claude-plugin", "marketplace.json"), encoding="utf-8") as f:
             name = json.load(f)["plugins"][0]["name"]
-        readme = read(os.path.join(ROOT, "README.md"))
+        readme = read(README)
         self.assertIn("**Add marketplace**, and type `ritwikvashistha/conference-picks`", readme)
         self.assertIn("**%s** now appears among the plugins" % name, readme)
 
@@ -144,31 +158,54 @@ class SkillText(unittest.TestCase):
             papers = json.load(f)
         posters = [p for p in papers if p["type"] == "Poster"]
         searchable = [p for p in posters if p.get("abstract") and p.get("id")]  # what search.py ranks
-        notice, readme = read(os.path.join(SKILL, "DATA_NOTICE.md")), read(os.path.join(ROOT, "README.md"))
+        notice, readme = read(os.path.join(SKILL, "DATA_NOTICE.md")), read(README)
         self.assertIn("For each of the {:,} NeurIPS 2026 events ({:,} posters".format(len(papers), len(posters)), notice)
-        self.assertIn("ranks all {:,} posters with an abstract".format(len(searchable)), readme)
+        self.assertIn("search.py scores the {:,} posters".format(len(searchable)), readme)  # in the How it works diagram
         snapshot = re.search(r'"snapshot_date": "(\d{4}-\d\d-\d\d)"', read(os.path.join(SKILL, "scripts", "search.py"))).group(1)
         self.assertIn(snapshot, notice)
         self.assertIn(snapshot, readme)
 
-    def test_the_pointer_in_other_conferences_and_the_readme_cover_pdf_programs(self):
+    def test_the_how_it_works_diagram_lines_up_and_fits_a_phone(self):
+        diagram = re.search(r"#+ How it works\n.*?```text\n(.*?)\n```", read(README), re.S).group(1).splitlines()
+        boxes = [l for l in diagram if l.startswith(("  +", "  |"))]
+        self.assertGreaterEqual(len([l for l in boxes if l.startswith("  +")]), 8, "four boxes, each with a top and a bottom")
+        self.assertEqual({len(l) for l in boxes}, {len(boxes[0])}, "a box line is longer or shorter than the others")
+        self.assertTrue(all(l.endswith(("+", "|")) for l in boxes))
+        self.assertLessEqual(max(map(len, diagram)), 52)
+        self.assertTrue(diagram and all(ord(c) < 128 for l in diagram for c in l), "plain ASCII lines up in every font")
+
+    def test_the_pointer_in_other_conferences_and_the_other_conferences_page_cover_pdf_programs(self):
         self.assertIn("TEXT_PROGRAMS.md", read(OTHER))
-        readme = read(os.path.join(ROOT, "README.md"))
+        self.assertIn("](docs/other-conferences.md)", read(README))
+        page = read(os.path.join(DOCS, "other-conferences.md"))
         for phrase in ("pdftotext", "TEXT_PROGRAMS.md", "estimate", "$0.49", "$0.25", "$0.26"):  # the measured costs of the agent runs
-            self.assertIn(phrase, readme)
+            self.assertIn(phrase, page)
         for stale in ("No agent run has measured", "no agent has run this route yet"):
-            self.assertNotIn(stale, readme)
+            self.assertNotIn(stale, page)
 
     def test_data_notice_says_other_conferences_stay_on_the_users_machine(self):
         self.assertIn("~/.conference-picks", read(os.path.join(SKILL, "DATA_NOTICE.md")))
 
-    def test_every_relative_link_in_the_readme_exists(self):
-        for target in re.findall(r"\]\(([^)#\s]+)\)", read(os.path.join(ROOT, "README.md"))):
-            if not target.startswith(("http://", "https://", "mailto:")):
-                self.assertTrue(os.path.exists(os.path.join(ROOT, target)), "README links to a missing file: " + target)
+    def test_every_relative_link_in_the_readme_and_the_docs_reaches_a_file_and_heading_that_exist(self):
+        def anchors(path):  # GitHub's heading ids, for the headings outside code blocks
+            text = re.sub(r"```.*?```", "", read(path), flags=re.S)
+            return {re.sub(r"[^a-z0-9 _-]", "", h.strip().lower()).replace(" ", "-") for h in re.findall(r"^#+ (.+)$", text, re.M)}
+        pages = [README] + [os.path.join(DOCS, f) for f in sorted(os.listdir(DOCS)) if f.endswith(".md")]
+        self.assertGreaterEqual(len(pages), 4)
+        for page in pages:
+            for target in re.findall(r"\]\(([^)\s]+)\)", read(page)):
+                if target.startswith(("http://", "https://", "mailto:")):
+                    continue
+                path, _, anchor = target.partition("#")
+                path = os.path.normpath(os.path.join(os.path.dirname(page), path)) if path else page
+                self.assertTrue(os.path.exists(path), "%s links to a missing file: %s" % (os.path.relpath(page, ROOT), target))
+                if anchor:
+                    self.assertIn(anchor, anchors(path), "%s links to a missing heading: %s" % (os.path.relpath(page, ROOT), target))
 
-    def test_the_readme_explains_other_conferences(self):
-        self.assertIn("Other conferences", read(os.path.join(ROOT, "README.md")))
+    def test_the_readme_stays_a_short_landing_page(self):
+        readme = read(README)
+        self.assertIn("Other conferences", readme)
+        self.assertLessEqual(len(readme.split()), 1400, "move details to docs/ instead")  # with two real example answers
 
 
 if __name__ == "__main__":

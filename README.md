@@ -1,166 +1,157 @@
 # conference-picks
 
-An agent skill that tells you which papers and authors at a conference are of potential interest to you, given your own prior work or research interests. Tell it your NeurIPS 2026 paper, your name or an abstract, and it gives you a ranked reading list with a one-line reason for each paper, sorted by site (Sydney, Atlanta, Paris), session and local time, plus the people worth meeting. It can also make a calendar file or a spreadsheet of your picks. Other conferences work from a paper list you bring (see [Other conferences](#other-conferences-experimental), experimental).
+**Going to an academic conference (e.g. NeurIPS 2026)? Find the papers and people closest to your own work and network faster.**
 
-It runs in your own Claude or ChatGPT account, with no sign-ups and no API keys. The NeurIPS 2026 program inside it is a snapshot taken on 2026-11-04 and 2026-11-05, so check neurips.cc for the official schedule.
+[Install](#install) · [Use it](#use-it) · [How it works](#how-it-works) · [Other conferences](#other-conferences) · [More details](docs/details.md)
 
-## Install: pick your setup
+A skill for Claude and ChatGPT. Give it your NeurIPS 2026 paper, your name, an abstract or your past papers. It returns 15 to 25 papers worth seeing, each with a one-line reason, sorted by site (Sydney, Atlanta, Paris), session and local time, plus the people worth meeting. It runs in your own Claude or ChatGPT account: no sign-ups, no API keys.
 
-| You use | Your plan | What you do | Tested |
-| --- | --- | --- | --- |
-| **Claude** on the website, desktop app or phone | Free or paid | [Add it by name](#claude-website-desktop-app-or-phone), nothing to download | Yes, on a Free account |
-| **ChatGPT** on the website or app | Free or paid | [Upload one file](#chatgpt-website-or-app) | Yes, on a Free account |
-| **Claude Code** or **Codex**, in a terminal or a coding app | Claude Pro or above, or a ChatGPT plan that includes Codex | [Paste two commands](#in-a-terminal-claude-code-or-codex) | Yes |
+The NeurIPS 2026 program inside is a snapshot taken on 2026-11-04 and 2026-11-05, so check neurips.cc for the official schedule. Other conferences work from a paper list you bring ([see below](#other-conferences)).
 
-### Claude: website, desktop app or phone
+## Install
 
-1. In Claude, open **Settings → Capabilities** and turn on **Code execution and file creation** (newer versions call it **Create and edit files**).
-2. Open **Customize → Plugins**, click **Add**, then **Add marketplace**, and type `ritwikvashistha/conference-picks`. Claude fetches it from this GitHub page.
+| You use | Plan | What you do |
+| --- | --- | --- |
+| **Claude**: website, desktop app or phone | Free or paid | [Add it by name](#claude), nothing to download |
+| **ChatGPT**: website or app | Free or paid | [Upload one file](#chatgpt) |
+| **Claude Code** or **Codex** | Claude Pro or above, or a ChatGPT plan with Codex | [Paste two commands](#claude-code-or-codex) |
+
+Both chat routes were tested on Free accounts. Other routes, updates and sharing: [docs/install.md](docs/install.md).
+
+### Claude
+
+1. Open **Settings → Capabilities** and turn on **Code execution and file creation** (newer versions call it **Create and edit files**).
+2. Open **Customize → Plugins**, click **Add**, then **Add marketplace**, and type `ritwikvashistha/conference-picks`.
 3. **conference-picks** now appears among the plugins. Open it and click **Add**.
-4. Start a new chat and ask your question (see [Use it](#use-it)).
+4. Start a new chat and ask your question.
 
-Add it once on the website or desktop app. It then belongs to your Claude account, so you can ask from the phone app too (the phone has not been tried yet). If you also use Claude Code with the same account, it shows up there by itself. To get new versions as they come out, turn on **Sync automatically** for this marketplace in Customize → Plugins, or click **Check for updates** there now and then.
+No Plugins page? [Upload the zip instead](docs/install.md#no-plugins-page-upload-the-zip).
 
-If you have no Plugins page (a work account can turn it off), upload the skill as a file instead: download **[conference-picks.zip](https://github.com/ritwikvashistha/conference-picks/releases/latest/download/conference-picks.zip)** (do not unzip it; see [About the zip files](#about-the-zip-files)), open **Customize → Skills**, click **+**, then **Create skill → Upload a skill**, and choose the zip. An uploaded copy does not update itself: upload the new zip when a new version comes out.
+### ChatGPT
 
-### ChatGPT: website or app
+1. Download **[conference-picks-chatgpt.zip](https://github.com/ritwikvashistha/conference-picks/releases/latest/download/conference-picks-chatgpt.zip)** and keep it zipped ([what is in it?](docs/install.md#about-the-zip-files)).
+2. Click **Plugins** in the sidebar, open **Skills**, click **Create**, then **Upload from your computer**, and choose the zip.
+3. Start a new chat, type **@conference-picks** and ask your question.
+4. If ChatGPT says it cannot open the skill's files, drag the same zip into the chat.
 
-1. Download **[conference-picks-chatgpt.zip](https://github.com/ritwikvashistha/conference-picks/releases/latest/download/conference-picks-chatgpt.zip)**. This is a different file from the Claude one. Do not unzip it (see [About the zip files](#about-the-zip-files)).
-2. In ChatGPT, click **Plugins** in the sidebar, open **Skills**, click **Create**, then **Upload from your computer**, and choose the zip. ChatGPT checks the file before you can use it.
-3. Start a new chat, type **@conference-picks** and ask your question (see [Use it](#use-it)).
-4. ChatGPT may say it cannot open the skill's files. If it asks, drag the same zip into the chat, and it carries on from there.
+### Claude Code or Codex
 
-On a work or school account, your administrator may have to allow uploads first. ChatGPT has no way to add it by name yet, so the zip is the only route.
-
-### About the zip files
-
-You never open or run a zip on your computer: you hand it to ChatGPT or Claude, which unpack it and run its scripts in their own sandbox. Each zip holds the skill's instructions, its Python scripts and the NeurIPS 2026 data, all readable in [plugins/conference-picks](plugins/conference-picks). From version 0.3.5 on, GitHub builds both zips from that code for each release, not on anyone's own computer, and publishes a signed record of the build. Anyone with GitHub's command-line tool can check that a downloaded zip is the one GitHub built: `gh attestation verify conference-picks-chatgpt.zip --repo ritwikvashistha/conference-picks`.
-
-### In a terminal: Claude Code or Codex
-
-For people who already use Claude Code (Claude Pro or above) or Codex (a ChatGPT plan that includes Codex). These run the skill on your own computer, which needs Python 3.9 or newer. Tested on macOS with Python 3.9, 3.10, 3.12 and 3.13; Windows and Linux are untested.
-
-**Claude Code:**
+Needs Python 3.9 or newer.
 
 ```bash
 claude plugin marketplace add ritwikvashistha/conference-picks
 claude plugin install conference-picks@conference-picks
 ```
 
-**Codex:**
-
 ```bash
 codex plugin marketplace add ritwikvashistha/conference-picks
 codex plugin add conference-picks@conference-picks
 ```
 
-Then start a new session and ask your question. You can also call it by name: `/conference-picks:conference-picks` in Claude Code, `$conference-picks` in Codex.
-
 ## Use it
 
-Ask in plain words. For example:
+Ask in plain words:
 
 > I'm going to NeurIPS 2026. My paper there is id 148353. Which papers should I see?
 
-Your paper's id is the number at the end of its page, `neurips.cc/virtual/2026/poster/<id>`. You can also give your name ("My name is First Last") or paste an abstract.
+The start of a real answer to that question (Claude Code, Standard budget; [full answer](docs/example-answer-neurips.md)):
 
-**Based on all your work.** Instead of one paper, it can read your recent papers, group them into up to three research areas and ask which to focus on. Give it one of these:
+> Your paper, [Noisy2Latent: Nonparametric Deconvolution and Denoising via Maximum Mean Discrepancy](https://neurips.cc/virtual/2026/poster/148353) (148353), is presented at **Sydney Tue 2026-12-08 10:00**.
+>
+> **Sydney Tue 2026-12-08 10:00**
+>
+> - **#5** [Bridging the Simulation-to-Experiment Gap with Adversarial Distribution Alignment](https://neurips.cc/virtual/2026/poster/151598): Kai Nelson, Tobias Kreiman, Sergey Levine, Aditi Krishnapriyan. They align a generative model with experimental data that only partly observe the system's state, so the model is fitted through an observation process. You do the same when you match the observed data to the noise-convolved model. **Same slot as your poster.**
+>
+> **Sydney Thu 2026-12-10 10:00**
+>
+> - **#1** [Empirical Bayes Flow Matching for Continuous Cryo-EM Heterogeneity](https://neurips.cc/virtual/2026/poster/151539): Daniel Aibinder, Azmi Haider, Dan Rosenbaum. They learn a flow-matching prior over latent variables directly from indirect, noisy observations (cryo-EM projections), inside a Monte Carlo EM framework. Your paper has the same goal: learn the latent distribution from noisy data and use it as a prior. Theirs takes a likelihood-based EM route with a non-linear forward operator, where yours uses a likelihood-free convMMD loss under additive noise.
+>
+> *... 18 more picks in Sydney, Atlanta and Paris, then the authors worth talking to.*
 
-- **A BibTeX file from Google Scholar.** On your Scholar profile, tick the box above your list of papers to select them all, click **Export**, choose **BibTeX**, and attach the file to the chat.
-- **Your paper titles**, pasted one per line.
-- **Your ORCID**, for example "My ORCID is 0000-0002-1825-0097". It finds your works on OpenAlex, or on your ORCID record if OpenAlex does not know you yet. This needs the internet, which chat apps often block (ChatGPT usually does); it then asks you for one of the other two.
+Your paper's id is the number at the end of its page, `neurips.cc/virtual/2026/poster/<id>`. Instead, you can give:
 
-A Google Scholar link alone will not work: Scholar blocks automated access, so it asks for the BibTeX file instead. Reading your work costs more tokens than starting from one paper.
+- your name ("My name is First Last") or a pasted abstract;
+- **all your work**: a BibTeX file exported from Google Scholar, your paper titles, or your ORCID. It groups your papers into up to three areas and asks which to focus on ([how](docs/details.md#all-your-work)). A Scholar link alone will not work.
 
-What you get: 15 to 25 papers, each with a one-line reason, grouped by site and session in local time, and up to 8 people worth talking to. It may ask how much to read first: choose **Standard** if unsure. Afterwards you can ask for "a calendar file" or "a spreadsheet" of the picks.
+If it asks how much to read, choose **Standard** ([what each costs](docs/details.md#reading-budgets)). Afterwards, ask for "a calendar file" or "a spreadsheet" of the picks.
 
-## More details
+## Other conferences
 
-### Other ways to install
+NeurIPS 2026 is built in. For any other conference, give it the paper list. It reads the file, shows you what it found (the number of papers and three samples) and waits for your OK before it searches.
 
-**Standalone skill in Claude Code:**
+- **A CSV or JSON file** with title, authors and abstract. Conferences on the same website software as NeurIPS, such as ICML and ICLR, offer one on their Downloads page (for example `icml.cc/Downloads/2026`: choose csv, press **Download Data**).
 
-```bash
-git clone https://github.com/ritwikvashistha/conference-picks
-cp -r conference-picks/plugins/conference-picks/skills/conference-picks ~/.claude/skills/
+  > I'm going to ICML 2026. Its paper list is `~/Downloads/ICML 2026 Events.csv`. My abstract is: ...
+
+- **A PDF book of abstracts**, for conferences that publish only that ([which layouts work](docs/other-conferences.md#a-pdf-or-text-book-of-abstracts)). On your own computer this needs `pdftotext` (on a Mac, `brew install poppler`); the skill tells you if it is missing.
+
+  > I'm going to ISBA 2026. Its program is `~/Downloads/isba2026_program.pdf`. My abstract is: ...
+
+The start of the real ICML answer ([full answer](docs/example-answer-icml.md); the [ISBA answer](docs/example-answer-isba.md) groups its picks by day and time):
+
+> These picks are from ICML 2026: your file `ICML 2026 Events.csv`, imported on 2026-11-11 as dataset `icml2026`. [...]
+>
+> - **#1 [Provable Bounds for the Learnability of Sample-Compressible Families from Noisy Samples](https://ICML.cc/virtual/2026/poster/62572)**: Arefe Boushehrian, Amir Najafi. It asks when a family of distributions on R^d can be learned at all, and with how many samples, when the samples are noisy (the noise appears in the title; the part I read covers sample complexity). This is the learning-theory side of your finite-sample bounds for recovering a latent density from noisy data.
+>
+> *... 18 more ranked picks, then the people worth talking to.*
+
+ICML's file has no session times, so its picks are ranked only. In Claude Code or Codex the imported list is kept for later questions; in a chat, attach the file again in a new chat. Details and test status: [docs/other-conferences.md](docs/other-conferences.md).
+
+## How it works
+
+Steps marked *model* are done by the AI you run it in (Claude, ChatGPT, Codex) and use tokens. The *script* steps run on your computer or in the chat's own sandbox, cost nothing and send nothing anywhere.
+
+```text
+  You: a NeurIPS paper id, your name or an abstract
+       (or all your work: BibTeX, titles, ORCID *)
+                        |
+                        v
+  +------------------------------------------+
+  | 1  BRIEF                           model |
+  | ~25 short phrases: other names for       |
+  | your ideas, neighbouring fields          |
+  +------------------------------------------+
+                        |
+                        v
+  +------------------------------------------+
+  | 2  SEARCH                script, offline |
+  | search.py scores the 9,145 posters       |
+  | with an abstract by word overlap with    |
+  | your abstract and the brief              |
+  | -> 150 candidates                        |
+  +------------------------------------------+
+                        |
+                        v
+  +------------------------------------------+
+  | 3  JUDGE                           model |
+  | reads the promising ones (Standard:      |
+  | about 30 abstracts), keeps 15 to 25,     |
+  | one reason each                          |
+  +------------------------------------------+
+                        |
+                        v
+  +------------------------------------------+
+  | 4  PLAN                   model + script |
+  | the model groups the picks by site >     |
+  | session > local time and names up to     |
+  | 8 people to meet; scripts make the       |
+  | calendar or spreadsheet if you ask       |
+  +------------------------------------------+
+
+  * All your work: the profile command reads your
+    BibTeX file or titles, or fetches your works by
+    ORCID. Looking up works and abstracts on
+    OpenAlex and ORCID is the only step that goes
+    online. The model groups your works into up to
+    3 areas, and steps 1 to 3 run once per area.
 ```
 
-**Standalone skill in Codex.** Codex looks in `~/.agents/skills/` (all projects) and in `.agents/skills/` from the project folder up to the repository root (that repository only):
+Word overlap cannot tell a strong match from a shared buzzword, so the brief adds other names for your ideas and the model judges the 150 candidates instead of trusting their order. On six test papers, Standard picked 56 of the 94 papers an LLM judge rated closely related, against 34 for the word search alone ([how it was measured](docs/details.md#how-well-does-it-work), and the [limits](docs/details.md#limits)).
 
-```bash
-git clone https://github.com/ritwikvashistha/conference-picks
-mkdir -p ~/.agents/skills
-cp -r conference-picks/plugins/conference-picks/skills/conference-picks ~/.agents/skills/
-```
+## Privacy
 
-**Other agents:** untested. Point the agent at `plugins/conference-picks/skills/conference-picks/SKILL.md` and tell it to follow it.
+The search sends nothing anywhere. Only reading all your work goes online: it sends the name, ORCID or titles you give it to OpenAlex and ORCID. What you type goes to your AI provider, as with any chat ([more](docs/details.md#privacy)).
 
-**Building the zips yourself:** `python3 tools/make_zip.py` writes both to `dist/`. `conference-picks.zip` is one `conference-picks/` folder with `SKILL.md` at its top, as Claude expects. `conference-picks-chatgpt.zip` holds the same skill laid out as the plugin archive ChatGPT asks for, with `.claude-plugin/plugin.json` and `skills/conference-picks/` at its root.
+## Licence, data and contact
 
-**Making a release:** raise `version` in `plugins/conference-picks/.claude-plugin/plugin.json`, then push a tag with that version, such as `v0.3.5`. The [release workflow](.github/workflows/release.yml) refuses a tag that does not match, runs the tests with Python 3.9, builds both zips, signs a record of the build and puts the zips on a draft release; write the notes and publish it. Add marketplace (in Claude and in the terminal commands) installs from `main`, not from a release, so whatever is pushed to `main` reaches everyone who syncs: keep `main` working.
-
-**More on Claude:** each person adds their own copy. On Team and Enterprise plans you can share the skill with colleagues from its ••• menu in Customize → Skills.
-
-**More on ChatGPT:** OpenAI documents skills for Business, Enterprise, Healthcare and Edu plans; a Free account accepted the upload too. When ChatGPT loads the skill's instructions but cannot run its scripts, the skill tells it to ask for the zip, unzip it and run it from there. In a workspace, you can share the skill from its ••• menu; sharing stays inside the workspace. There is no custom GPT version: OpenAI retires custom GPTs on 2026-12-11.
-
-### Other conferences (experimental)
-
-NeurIPS 2026 is bundled. For another conference, bring its paper list as a CSV or JSON file with title, authors and abstract (times are optional). Many conferences publish one on the same website software as NeurIPS: on the Downloads page of the conference site (for example `icml.cc/Downloads/2026`), choose csv and press Download Data. Then ask your question, naming the conference and the file:
-
-> I'm going to ICML 2026. Its paper list is `~/Downloads/ICML 2026 Events.csv`. My abstract is: ...
-
-The agent looks at the file, writes a column mapping, and `scripts/import_dataset.py` checks it. The import writes nothing if the file is not good enough (fewer than 50 records, missing titles, abstracts on under half of the papers, conflicting ids, times without a time zone). Otherwise it saves the dataset in `~/.conference-picks/<name>/` (set `CONFERENCE_PICKS_HOME` to move it) and shows a report with three sample records for you to confirm. If you say something is wrong, the agent fixes the mapping and imports again, or deletes the dataset. Later questions reuse it, and `python3 scripts/search.py list` shows what is installed. If the agent cannot write there (a read-only Codex folder, say), it is told to print the mapping and the import command for you to run in your own terminal.
-
-With no times in the file there is no grouping by session and no calendar file; picks are ranked and the answer says so. A dataset comes from one file: if abstracts and times are in different files, join them first. Status: tested by script on the ICML 2026 CSV and on NeurIPS's raw files. With agents, on the ICML file only and one run each: Claude Code (Sonnet) imported it and gave picks, reused the saved dataset in a second run, and asked for the file when given none; Codex imported it and gave picks where it could write, and printed the import command where it could not (an earlier read-only run, told in advance to accept the report, ran the importer in memory and opened a web page despite the instructions). Not tested: you confirming the report yourself (these runs had it pre-approved or could not write), a conference file with session times, other file formats, claude.ai with this version, Windows and Linux.
-
-#### A PDF or text book of abstracts (experimental)
-
-Some conferences publish only a book of abstracts. Give the agent the PDF, or its text, and name the conference; [TEXT_PROGRAMS.md](plugins/conference-picks/skills/conference-picks/TEXT_PROGRAMS.md) tells it what to do. Supported: a single-column book in which every entry is a title, one marker line (`Presenter: Name`, or `Authors: Name (Affil), ...`) and an abstract, under day, time-block and session headings, with footers and page numbers around. Not supported: two-column layouts, scanned books (there is no OCR), tables, figures, and an author list that wraps over several lines. A PDF needs `pdftotext` from poppler: the importer calls `pdftotext -layout` itself when it is on your PATH, and otherwise prints the command (`pdftotext -layout book.pdf book.txt`) for you to run. It installs nothing.
-
-Parsing runs on your machine and costs no tokens. The extra cost is the agent's own turns, once per book (later questions reuse the saved dataset): a structure summary from `inspect` (under 3 KB), the patterns it writes, a retry if a check refuses, and the import report. Measured with Claude Sonnet on the 193-page test book, one run each: $0.49 for one full run (import and picks, 31 turns, an earlier version of the instructions); with the final instructions, $0.25 for the import and report, where the agent stops to ask you, plus $0.26 for the picks in a later run that reuses the saved dataset. The ICML CSV took $0.29 for import and picks, so the book route costs about $0.2 more (about 70%), once per book. A different book, agent or wording will differ. The expensive mistake is putting the book itself into the chat: the 193-page test book is 943,438 characters, about 236K tokens at 4 characters per token (an estimate), so give the agent the file's path and do not attach it.
-
-You get title, abstract, presenter or listed authors, day, time block, session and room, and the book page when the offset between printed and PDF page numbers is known. Only the people the book lists are known, and affiliations only if it prints them, so `who --affil` is weak. Times are those of the session or block, not of each talk. Entries are cut out by patterns, so some can come out wrong: on the real book used for testing, at least 6 of 637 titles were wrong. The import refuses a weekday that does not match its date (that book prints two), until you confirm the real date. The patterns are the agent's: in one run its room pattern missed one session heading and left 4 entries wrong, so check the `text:` line of the report (days, blocks and sessions found) as well as the samples. Status: tested by script on synthetic books and locally on one real 637-entry book; with agents, Claude Sonnet ran it on that book as above (five runs, one book). Not tested: Codex, claude.ai, a second real book, and the Authors layout on a real book.
-
-### Reading budgets
-
-The agent asks how much reading you want, or defaults to Standard. Measured extra tokens on top of an agent's baseline, in tests with Claude subagents (yours may differ):
-
-| Mode | What the agent reads | Extra tokens |
-| --- | --- | --- |
-| Quick | the ranked list only | a few thousand (estimate) |
-| Standard (default) | one line per candidate, then the start of about 30 abstracts | about 35K |
-| Deep | the abstracts of all 150 candidates | about 115K |
-| All your work, with Standard | your works from OpenAlex, three pools, about 30 abstracts | about 45K (one test) |
-
-### How it works
-
-1. The agent reads your abstract and writes a short keyword brief (other names for your ideas, neighbouring fields).
-2. `search.py` ranks all 9,145 posters with an abstract by word overlap with your abstract and the brief, and returns a pool of 150.
-3. The agent reads the promising candidates, picks 15 to 25, and explains each one in terms of your work.
-4. Output is grouped by site and session time, with times local to each site.
-
-When it reads all your work, it gets your recent works from [OpenAlex](https://openalex.org) by ORCID (or, when OpenAlex has not linked that ORCID, from the public ORCID record, with abstracts from OpenAlex by DOI or title), or from your BibTeX file or titles; with the internet it also looks up their abstracts. It groups them into research areas and proposes the top three. You choose which to prioritize, or accept its default (about half, 30% and 20% of the picks), and it searches each area separately. When the internet is blocked, the script says so and the agent asks for a BibTeX file or titles instead of searching the web.
-
-Other commands: `who --name "..."` and `who --affil "UT Austin"` look people and institutions up (spelling variants merged), `ics` writes a calendar file, `csv` writes a spreadsheet of the picks.
-
-### How well does it work?
-
-Checked on six papers from different research areas, with a separate LLM judging every paper in each 150-paper pool on a 0 to 3 scale without knowing which method picked what. Standard picked 56 of the 94 papers rated closely related (rated 2 or more), against 34 for the plain word search, and found all 18 papers rated 3. These are one LLM judge's ratings on six papers, not human ratings, and only Claude agents were used for this. Codex was checked only for running end to end, not for quality. Treat it as a good reading list, not a ground truth.
-
-### Limits
-
-- The word search ranks by overlap, so a shared buzzword can crowd the top of the list. The agent is told to judge, not trust the order.
-- Poster board numbers were not published when the data was collected, and sessions can change.
-- Author lookup in the NeurIPS data is by name or affiliation. When it reads all your work, OpenAlex sometimes merges different people with similar names, may not know a newer ORCID, or has missing or wrong abstracts, so the agent checks the list with you. From a BibTeX file or titles without the internet it has titles only, which make rougher picks than abstracts.
-
-### Privacy
-
-The search script and the importer send nothing anywhere: they run on your computer, or in your Claude or ChatGPT chat's own sandbox. The one exception is the `profile` command, used when it reads all your work: it sends the name, ORCID or paper titles you give it to api.openalex.org, and an ORCID also to pub.orcid.org, to look up your works. A BibTeX file or titles in a chat without the internet stay in that chat. Whatever you give your agent goes to your agent's provider, as with any use of it.
-
-### Data
-
-A snapshot of public NeurIPS 2026 program data is bundled; no other conference's data is. See [DATA_NOTICE.md](plugins/conference-picks/skills/conference-picks/DATA_NOTICE.md) for what it contains, where it came from, and how to ask for a correction or removal.
-
-## Licence and contact
-
-MIT, see [LICENSE](LICENSE). Contact: ritwikvashistha@gmail.com
+MIT, see [LICENSE](LICENSE). The bundled NeurIPS 2026 data is public program data; see [DATA_NOTICE.md](plugins/conference-picks/skills/conference-picks/DATA_NOTICE.md) for its sources and how to ask for a correction or removal. Contact: ritwikvashistha@gmail.com, [ritwikvashistha.github.io](https://ritwikvashistha.github.io/)
